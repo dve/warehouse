@@ -30,7 +30,7 @@
 class Survey_Controller extends Gridview_Base_Controller {
 
   public function __construct() {
-    parent::__construct('survey', 'survey/index');
+    parent::__construct('survey', 'gv_survey', 'survey/index');
     $this->columns = array(
       'id'          => '',
       'title'       => '',
@@ -38,7 +38,7 @@ class Survey_Controller extends Gridview_Base_Controller {
       'website'     => ''
     );
     $this->pagetitle = "Surveys";
-    $this->set_website_access('admin');
+    $this->auth_filter = $this->gen_auth_filter;
   }
   
   /**
@@ -47,14 +47,8 @@ class Survey_Controller extends Gridview_Base_Controller {
    */
   protected function get_action_columns() {
     return array(
-      array(
-        'caption'=>'edit',
-        'url'=>$this->controllerpath."/edit/{id}"
-      ),
-      array(
-        'caption'=>'setup attributes',
-        'url'=>"/attribute_by_survey/{id}?type=sample"
-      )
+        'edit' => $this->controllerpath."/edit/£id£",
+        'setup attributes' => "/attribute_by_survey/£id£?type=sample"
     );
   }
 
@@ -70,13 +64,6 @@ class Survey_Controller extends Gridview_Base_Controller {
       return (in_array($survey->website_id, $this->auth_filter['values']));
     }
     return true;
-  }
-  
-  /**
-   * You can only access the list of surveys if at least an editor of one website.
-   */
-  protected function page_authorised() {
-    return $this->auth->logged_in('CoreAdmin') || $this->auth->has_any_website_access('editor');
   }
 }
 

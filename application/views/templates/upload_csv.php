@@ -21,9 +21,7 @@
  * @link 	http://code.google.com/p/indicia/
  */
 
-?>
-<form enctype="multipart/form-data" class="linear-form" method="post" action="<?php echo url::site().$controllerpath.'/importer/'.$returnPage; ?>">
-<?php
+print form::open($controllerpath.'/importer/'.$returnPage, array('ENCTYPE'=>'multipart/form-data'));
 if ($staticFields != null) {
   foreach ($staticFields as $a => $b) {
     print form::hidden($a, $b);

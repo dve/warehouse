@@ -21,29 +21,13 @@
  * @link     http://code.google.com/p/indicia/
  */
 
-/**
- * Override of the Kohana core ORM class which provides Indicia specific functionality for submission of data.
- * ORM objects are normally instantiated by calling ORM::Factory(modelname[, id]). For Indicia ORM objects, 
- * there is an option to pass -1 as the ID indicating that the ORM object should not be initialised. This
- * allows access to variables such as the lookup table and search field without full instantiation of the ORM
- * object, saving hits on the database etc.
- */
 class ORM extends ORM_Core {
-  /**
-  * @var Should foreign key lookups be cached? Set to true during import for example.
-  */
-  public static $cacheFkLookups = true;
-
-  public function last_query() {
-    return $this->db->last_query();
-  }
-  
   public $submission = array();
-  
+
   /**
    * The default field that is searchable is called title. Override this when a different field name is used.
    */
-  public $search_field='title';
+  protected $search_field='title';
 
   protected $errors = array();
   protected $identifiers = array('website_id'=>null,'survey_id'=>null);
@@ -65,58 +49,52 @@ class ORM extends ORM_Core {
    */
   protected $has_attributes = false;
   
-  private $cache;
-  
   /**
    * Constructor allows plugins to modify the data model.
    */
   public function __construct($id = NULL)
   {
-    if (is_object($id) || $id!=-1) {
-      // use caching, so things don't slow down if there are lots of plugins. the object_name does not 
-      // exist yet as we haven't called the parent construct, so we build our own.
-      $object_name = strtolower(substr(get_class($this), 0, -6));
-      $cacheId = 'orm-'.$object_name;
-      $this->cache = Cache::instance();
-      $ormRelations = $this->cache->get($cacheId);
-      if ($ormRelations === null) {
-        // now look for modules which plugin to tweak the orm relationships.
-        foreach (Kohana::config('config.modules') as $path) {      
-          $plugin = basename($path);
-          if (file_exists("$path/plugins/$plugin.php")) {
-            require_once("$path/plugins/$plugin.php");
-            if (function_exists($plugin.'_extend_orm')) {
-              $extends = call_user_func($plugin.'_extend_orm');
-              if (isset($extends[$object_name])) {
-                if (isset($extends[$object_name]['has_one']))
-                  $this->has_one = array_merge($this->has_one, $extends[$object_name]['has_one']);
-                if (isset($extends[$object_name]['has_many']))
-                  $this->has_many = array_merge($this->has_many, $extends[$object_name]['has_many']);
-                if (isset($extends[$object_name]['belongs_to']))
-                  $this->belongs_to = array_merge($this->belongs_to, $extends[$object_name]['belongs_to']);
-                if (isset($extends[$object_name]['has_and_belongs_to_many']))
-                  $this->has_and_belongs_to_many = array_merge($this->has_and_belongs_to_many, $extends[$object_name]['has_and_belongs_to_many']);
-              }
+    // use caching, so things don't slow down if there are lots of plugins. the object_name does not 
+    // exist yet as we haven't called the parent construct, so we build our own.
+    $object_name = strtolower(substr(get_class($this), 0, -6));
+    $cacheId = 'orm-'.$object_name;
+    $cache = Cache::instance();
+    $ormRelations = $cache->get($cacheId);
+    if ($ormRelations === null) {
+      // now look for modules which plugin to tweak the orm relationships.
+      foreach (Kohana::config('config.modules') as $path) {      
+        $plugin = basename($path);
+        if (file_exists("$path/plugins/$plugin.php")) {
+          require_once("$path/plugins/$plugin.php");
+          if (function_exists($plugin.'_extend_orm')) {
+            $extends = call_user_func($plugin.'_extend_orm');
+            if (isset($extends[$object_name])) {
+              if (isset($extends[$object_name]['has_one']))
+                $this->has_one = array_merge($this->has_one, $extends[$object_name]['has_one']);
+              if (isset($extends[$object_name]['has_many']))
+                $this->has_many = array_merge($this->has_many, $extends[$object_name]['has_many']);
+              if (isset($extends[$object_name]['belongs_to']))
+                $this->belongs_to = array_merge($this->belongs_to, $extends[$object_name]['belongs_to']);
+              if (isset($extends[$object_name]['has_and_belongs_to_many']))
+                $this->has_and_belongs_to_many = array_merge($this->has_and_belongs_to_many, $extends[$object_name]['has_and_belongs_to_many']);
             }
           }
         }
-        $cacheArray = array(
-          'has_one' => $this->has_one,
-          'has_many' => $this->has_many,
-          'belongs_to' => $this->belongs_to,
-          'has_and_belongs_to_many' => $this->has_and_belongs_to_many
-        );
-        $this->cache->set($cacheId, $cacheArray);
-      } else {
-        $this->has_one = $ormRelations['has_one'];
-        $this->has_many = $ormRelations['has_many'];
-        $this->belongs_to = $ormRelations['belongs_to'];
-        $this->has_and_belongs_to_many = $ormRelations['has_and_belongs_to_many'];
       }
-      parent::__construct($id);
+      $cacheArray = array(
+        'has_one' => $this->has_one,
+        'has_many' => $this->has_many,
+        'belongs_to' => $this->belongs_to,
+        'has_and_belongs_to_many' => $this->has_and_belongs_to_many
+      );
+      $cache->set($cacheId, $cacheArray);
     } else {
-      kohana::log('debug', 'skipped constructor for '.strtolower(substr(get_class($this), 0, -6)));
+      $this->has_one = $ormRelations['has_one'];
+      $this->has_many = $ormRelations['has_many'];
+      $this->belongs_to = $ormRelations['belongs_to'];
+      $this->has_and_belongs_to_many = $ormRelations['has_and_belongs_to_many'];
     }
+    parent::__construct($id);
   }
 
   /**
@@ -240,30 +218,21 @@ class ORM extends ORM_Core {
       }
     }
     $this->set_metadata();
-    try {
-      if (parent::validate($array, $save)) {
-        return TRUE;
+    if (parent::validate($array, $save)) {
+      return TRUE;
+    }
+    else {
+      // put the trimmed and processed data back into the model
+      $arr = $array->as_array();
+      if (array_key_exists('created_on', $this->table_columns)) {
+        $arr['created_on'] = $this->created_on;
       }
-      else {
-        // put the trimmed and processed data back into the model
-        $arr = $array->as_array();
-        if (array_key_exists('created_on', $this->table_columns)) {
-          $arr['created_on'] = $this->created_on;
-        }
-        if (array_key_exists('updated_on', $this->table_columns)) {
-          $arr['updated_on'] = $this->updated_on;
-        }
-        $this->load_values($arr);
-        $this->errors = $array->errors('form_error_messages');
-        return FALSE;
+      if (array_key_exists('updated_on', $this->table_columns)) {
+        $arr['updated_on'] = $this->updated_on;
       }
-    } catch (Exception $e) {
-      if (strpos($e->getMessage(), '_unique')!==false) {
-        // duplicate key violation
-        $this->errors = array('You cannot add the record as it would create a duplicate.');
-        return FALSE;
-      } else 
-        throw ($e);
+      $this->load_values($arr);
+      $this->errors = $array->errors('form_error_messages');
+      return FALSE;
     }
   }
 
@@ -498,42 +467,29 @@ class ORM extends ORM_Core {
    * caption that must be searched for in the fk entity. This method does the searching and
    * puts the fk id back into the main model so when it is saved, it links to the correct fk
    * record.
-   * Respects the setting $cacheFkLookups to use the cache if possible.
    *
    * @return boolean True if all lookups populated successfully.
    */
   private function populateFkLookups() {
     $r=true;
-     if (!ORM::$cacheFkLookups) {
-       throw new Exception('NO CACHING');
-     }
     if (array_key_exists('fkFields', $this->submission)) {
       foreach ($this->submission['fkFields'] as $a => $b) {
-        $cache = false;
-        if (ORM::$cacheFkLookups) {
-          kohana::log('debug', 'trying to read from cache '.'lookup-'.$b['fkTable'].'-'.$b['fkSearchField'].'-'.$b['fkSearchValue']);
-          $cache = $this->cache->get('lookup-'.$b['fkTable'].'-'.$b['fkSearchField'].'-'.$b['fkSearchValue']);
-          if ($cache) kohana::log('debug', 'cache read OK');
-        }
-        if ($cache) {
-          $this->submission['fields'][$b['fkIdField']] = $cache;
-        } else {
-          $matches = $this->db
-              ->select('id')
-              ->from(inflector::plural($b['fkTable']))
-              ->like(array($b['fkSearchField'] => $b['fkSearchValue']))
-              ->limit(1)
-              ->get();
-          if (count($matches)<1) {
+        // Establish the correct model
+        $m = ORM::factory($b['fkTable']);
+        // Check that it has the required search field
+        if (array_key_exists($b['fkSearchField'], $m->table_columns)) {
+          $fkRecords = $m->like(array(
+              $b['fkSearchField'] => $b['fkSearchValue']));
+          if (isset($b['fkSearchFilterField'])) {
+            $fkRecords->where($b['fkSearchFilterField'], $b['fkSearchFilterValue']);
+          }
+          $fkRecords = $fkRecords->find_all();
+          if (count($fkRecords)<1) {
             $this->errors[$a] = 'Could not find a '.$b['readableTableName'].' by looking for "'.$b['fkSearchValue'].
                 '" in the '.ucwords($b['fkSearchField']).' field.';
             $r=false;
           } else {
-            $this->submission['fields'][$b['fkIdField']] = $matches[0]->id;
-            if (ORM::$cacheFkLookups) {
-              $this->cache->set('lookup-'.$b['fkTable'].'-'.$b['fkSearchField'].'-'.$b['fkSearchValue'], $matches[0]->id, array('lookup'));
-              kohana::log('debug', 'cache setting OK');
-            }
+            $this->submission['fields'][$b['fkIdField']] = $fkRecords[0]->id;
           }
         }
       }
@@ -635,7 +591,6 @@ class ORM extends ORM_Core {
         $joinModel = inflector::singular($this->join_table($table));
         // Remove any joins that are to records that should no longer be joined.
         foreach ($to_delete as $id) {
-          // @todo: This could be optimised by not using ORM to do the deletion.
           $joinModel = ORM::factory($joinModel,
             array($this->object_name.'_id' => $this->id, $model.'_id' => $id));
           $joinModel->delete();
@@ -773,7 +728,7 @@ class ORM extends ORM_Core {
         $fields["metaFields:$metaField"]='';
       }
     }    
-    if ($this->has_attributes) {
+    if ($this->has_attributes) {    
       $this->setupDbToQueryAttributes();
       $result = $this->db->get();
       foreach($result as $row) {
@@ -784,14 +739,7 @@ class ORM extends ORM_Core {
     $fields = array_merge($fields, $this->additional_csv_fields);
     return $fields;
   }
-
-  /**
-   * Retrieves a list of the required fields for this model and its related models.
-   * @param <type> $fk
-   * @param <type> $website_id
-   * @param <type> $survey_id
-   * @return <type>
-   */
+  
   public function getRequiredFields($fk = false, $website_id=null, $survey_id=null) {
     if ($website_id!==null) 
       $this->identifiers['website_id']=$website_id;
@@ -937,12 +885,8 @@ class ORM extends ORM_Core {
     }
     // Create a attribute value, loading the existing value id if it exists
     $attrValueModel = ORM::factory($this->object_name.'_attribute_value', $valueId);
-    $dt = $this->db
-        ->select('data_type')
-        ->from($this->object_name.'_attributes')
-        ->where(array('id'=>$attrId))
-        ->get();
-    $dataType = $dt[0]->data_type;
+    
+    $dataType = ORM::factory($this->object_name.'_attribute', $attrId)->data_type;
     $vf = null;
     
     switch ($dataType) {
@@ -1007,7 +951,7 @@ class ORM extends ORM_Core {
 
     $attrValueModel->save();
 
-    return true;
+     return true;
   }
 
   /**
@@ -1089,8 +1033,7 @@ class ORM extends ORM_Core {
         } else {
            $fkTable = $fieldName;
         }
-        // Create model without initialisting, so we can just check the lookup variables
-        $fkModel = ORM::Factory($fkTable, -1);
+        $fkModel = ORM::factory($fkTable);
         // let the model map the lookup against a view if necessary
         $lookupAgainst = isset($fkModel->lookup_against) ? $fkModel->lookup_against : $fkTable;
         // Generate a foreign key instance

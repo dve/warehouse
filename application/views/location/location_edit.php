@@ -20,6 +20,7 @@
  * @license	http://www.gnu.org/licenses/gpl.html GPL
  * @link 	http://code.google.com/p/indicia/
  */
+
  echo html::script(array(
   'media/js/jquery.ajaxQueue.js',
   'media/js/jquery.bgiframe.min.js',
@@ -120,7 +121,6 @@ jQuery(document).ready(function() {
 ?>
 </select>
 <input type="hidden" name="location:centroid_geom" id="centroid_geom" value="<?php echo $centroid_geom; ?>"/>
-<input type="hidden" name="location:boundary_geom" id="boundary_geom" value="<?php echo $boundary_geom; ?>"/>
 <?php echo html::error_message($model->getError('location:centroid_sref')); ?>
 <?php echo html::error_message($model->getError('location:centroid_sref_system')); ?>
 <p class="instruct">Zoom the map in by double-clicking then single click on the location's centre to set the
@@ -138,9 +138,8 @@ spatial reference. The more you zoom in, the more accurate the reference will be
 <legend>Location Websites</legend>
 <ol>
 <?php
-  $websiteIds = $this->get_allowed_website_id_list('editor');  
-  if (!is_null($websiteIds))
-    $websites = ORM::factory('website')->in('id', $websiteIds)->orderby('title','asc')->find_all();
+  if (!is_null($this->gen_auth_filter))
+    $websites = ORM::factory('website')->in('id',$this->gen_auth_filter['values'])->orderby('title','asc')->find_all();
   else
     $websites = ORM::factory('website')->orderby('title','asc')->find_all();        
   foreach ($websites as $website) {
@@ -162,7 +161,7 @@ spatial reference. The more you zoom in, the more accurate the reference will be
  <ol>
  <?php
 foreach ($values['attributes'] as $attr) {
-  $name = 'locAttr:'.$attr['location_attribute_id'];
+  $name = 'smpAttr:'.$attr['location_attribute_id'];
   // if this is an existing attribute, tag it with the attribute value record id so we can re-save it
   if ($attr['id']) $name .= ':'.$attr['id'];
   echo '<li><label for="">'.$attr['caption']."</label>\n";

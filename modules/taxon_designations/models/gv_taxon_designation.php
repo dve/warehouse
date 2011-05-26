@@ -14,33 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Taxon groups taxon lists
- * @subpackage Models
+ * @package	Core
+ * @subpackage GridModels
  * @author	Indicia Team
  * @license	http://www.gnu.org/licenses/gpl.html GPL
  * @link 	http://code.google.com/p/indicia/
  */
 
 /**
- * Model class for the taxon_groups_taxon_lists table.
+ * Declares a model simply to expose the gv_taxon_designations view to ORM.
  *
- * @package	Taxon groups taxon lists
- * @subpackage Models
- * @link	http://code.google.com/p/indicia/wiki/DataModel
+ * @package	Core
+ * @subpackage GridModels
  */
-class Taxon_groups_taxon_list_Model extends ORM {
-
-  protected $belongs_to = array(
-      'taxon_group'=>'',
-      'taxon_list'=>'',
-      'created_by'=>'user',
-      'updated_by'=>'user');
-
-  public function validate(Validation $array, $save = FALSE) {
-    $array->pre_filter('trim');
-    $array->add_rules('taxon_group_id', 'required');
-    $array->add_rules('taxon_list_id', 'required');
-    return parent::validate($array, $save);
-  }
+class gv_taxon_designation_Model extends ORM {
 
 }

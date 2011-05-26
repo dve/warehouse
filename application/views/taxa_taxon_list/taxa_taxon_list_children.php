@@ -1,4 +1,4 @@
-<?php defined('SYSPATH') or die('No direct script access.');
+<?php
 
 /**
  * Indicia, the OPAL Online Recording Toolkit.
@@ -15,18 +15,15 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
  * @package	Core
- * @subpackage GridModels
+ * @subpackage Views
  * @author	Indicia Team
  * @license	http://www.gnu.org/licenses/gpl.html GPL
  * @link 	http://code.google.com/p/indicia/
  */
-
-/**
- * Declares a model simply to expose the gv_taxa_taxon_lists view to ORM.
- *
- * @package	Core
- * @subpackage GridModels
- */
-class Gv_taxa_taxon_list_Model extends ORM {
-
-}
+  
+  echo $values['grid']; ?>
+  
+  <form class="cmxform" action="<?php echo url::site(); ?>taxa_taxon_list/create/<?php echo html::initial_value($values, 'taxon_list_id') ?>" method="post">
+    <input type="hidden" name="taxa_taxon_list:parent_id" value=<?php echo html::initial_value($values, 'id') ?> />
+    <input type="submit" value="New Child Taxon" class="ui-corner-all ui-state-default button" />
+  </form>

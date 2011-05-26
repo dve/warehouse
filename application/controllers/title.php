@@ -34,17 +34,14 @@ class Title_Controller extends Gridview_Base_Controller {
      */
   public function __construct()
   {
-    parent::__construct('title', 'title/index');
+    parent::__construct('title', 'title', 'title/index');
     $this->columns = array(
       'title'=>''
       );
     $this->pagetitle = "Titles";
   }  
 
-  /** 
-   * No access to the titles list unless core admin.
-   */
-  public function page_authorised()
+  public function record_authorised($id)
   {
     return $this->auth->logged_in('CoreAdmin');
   }

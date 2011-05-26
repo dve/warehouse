@@ -21,10 +21,12 @@
  * @link 	http://code.google.com/p/indicia/
  */
 
-echo $grid;
-?>
-<form action="<?php echo url::site().'taxon_group/create'; ?>">
+?><div class="taxon_group">
+<?php echo $table ?>
+<br />
+<?php print form::open('taxon_group/create'); ?>
 <input type="submit" value="New taxon group" class="ui-corner-all ui-state-default button" />
 </form>
 <br />
 <?php echo $upload_csv_form ?>
+</div>

@@ -29,10 +29,11 @@
  * @link	http://code.google.com/p/indicia/wiki/DataModel
  */
 class Sample_Image_Model extends ORM {
-  public $search_field = 'caption';
 
   protected $belongs_to = array('created_by' => 'user', 'updated_by' => 'user',
     'sample');
+
+  protected $search_field = 'caption';
 
   public function validate(Validation $array, $save = false) {
 

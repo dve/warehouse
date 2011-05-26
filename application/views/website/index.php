@@ -21,8 +21,11 @@
  * @link 	http://code.google.com/p/indicia/
  */
 
-echo $grid;
 ?>
-<form action="<?php echo url::site().'website/create'; ?>">
+<div class="termlist">
+<?php echo $table ?>
+<br />
+<form action="<?php echo url::site(); ?>website/create">
 <input type="submit" value="New website" class="ui-corner-all ui-state-default button" />
 </form>
+</div>

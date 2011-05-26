@@ -14,44 +14,54 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Core
+ * @package	Core
  * @subpackage Controllers
- * @author  Indicia Team
- * @license http://www.gnu.org/licenses/gpl.html GPL
- * @link    http://code.google.com/p/indicia/
+ * @author	Indicia Team
+ * @license	http://www.gnu.org/licenses/gpl.html GPL
+ * @link 	http://code.google.com/p/indicia/
  */
 
 /**
  * Controller providing CRUD access to the images for an occurrence comment
  *
- * @package  Core
+ * @package	Core
  * @subpackage Controllers
  */
 class Occurrence_comment_Controller extends Gridview_Base_Controller
 {
   public function __construct()
   {
-    parent::__construct('occurrence_comment', 'occurrence_comment/index');
+    parent::__construct('occurrence_comment', 'occurrence_comment', 'occurrence_comment/index');
     $this->columns = array(
-      'comment' => '', 'updated_on' => 'Updated on'
+      'comment' => '', 'updated_on' => ''
     );
     $this->pagetitle = "Occurrence Comments";
   }
 
   /**
-  * Override the default index functionality to filter by occurrence_id.
+  * Override the default page functionality to filter by occurrence_id.
   */
-  public function index()
+  public function page($page_no, $filter=null)
   {
-    if ($this->uri->total_arguments()>0) {
-      $this->base_filter=array('occurrence_id' => $this->uri->argument(1));
-    }
-    parent::index();
-    // pass the occurrence id into the view, so the create button can use it to autoset
-    // the occurrence of the new comment.
-    if ($this->uri->total_arguments()>0) {
-      $this->view->occurrence_id=$this->uri->argument(1);
-    }
+    $occurrence_id=$filter;
+    // At this point, $occurrence_id has a value - the framework will trap the other case.
+    // No further filtering of the gridview required as the very fact you can access the parent occurrence
+    // means you can access all the images for it.
+    $this->base_filter['occurrence_id'] = $occurrence_id;
+    parent::page($page_no);
+    $this->view->occurrence_id = $occurrence_id;
+  }
+
+  /**
+   * Method to retrieve pages for the index grid of taxa_taxon_list entries from an AJAX
+   * pagination call. Overrides the base class behaviour to enforce a filter on the
+   * taxon list id.
+   */
+  public function page_gv($page_no, $filter=null)
+  {
+    $occurrence_id=$filter;
+    $this->base_filter['occurrence_id'] = $occurrence_id;
+    return parent::page_gv($page_no);
   }
 
   /**

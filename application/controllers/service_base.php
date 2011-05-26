@@ -27,22 +27,6 @@
  * @package	Core
  */
 class ArrayException extends Kohana_Exception {
-  /**
-   * @var boolean Defines if the user is logged into the warehouse.
-   */
-  protected $in_warehouse = false;
-
-  /**
-   * @var int Id of the website calling the service. Obtained when performing read authentication and used
-   * to filter the response. A value of 0 indicates the warehouse.
-   */
-  protected $website_id = null;
-
-  /**
-   * @var boolean Flag set to true when user has core admin rights. Only applies when the request originates from the warehouse.
-   */
-  protected $user_is_core_admin = false;
-
   private $errors = array();
 
   /**
@@ -120,15 +104,15 @@ class Service_Base_Controller extends Controller {
             if ($id>0) 
               $this->website_id = $id;
             else {
-              $this->in_warehouse = true;
               $this->website_id = 0; // the Warehouse
               $this->user_id = 0 - $id; // user id was passed as a negative number to differentiate from a website id
               // get a list of the websites this user can see
-              $user = ORM::Factory('user', $this->user_id);
+              $user = ORM::Factory('user', $this->user_id);              
               $this->user_is_core_admin=($user->core_role_id===1);
+              kohana::log('info', 'core admin =  '.$this->user_is_core_admin);
               if (!$this->user_is_core_admin) {
                 $this->user_websites = array();
-                $userWebsites = ORM::Factory('users_website')->where(array('user_id'=>$this->user_id, 'site_role_id is not'=>null, 'banned'=>'f'))->find_all();
+                $userWebsites = ORM::Factory('users_website')->where('user_id', $this->user_id)->find_all();
                 foreach ($userWebsites as $userWebsite) 
                   $this->user_websites[] = $userWebsite->website_id;
               }

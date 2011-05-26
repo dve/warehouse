@@ -29,7 +29,6 @@
  * @link	http://code.google.com/p/indicia/wiki/DataModel
  */
 class Language_Model extends ORM {
-  public $search_field='language';
 
   protected $belongs_to = array('created_by'=>'user', 'updated_by'=>'user');
 
@@ -37,6 +36,8 @@ class Language_Model extends ORM {
     'terms',
     'taxa'
     );
+
+  protected $search_field='language';
 
   public function validate(Validation $array, $save = FALSE) {
     // uses PHP trim() to remove whitespace from beginning and end of all fields before validation

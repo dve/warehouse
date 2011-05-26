@@ -35,10 +35,7 @@ class Upgrade_Model extends Model
       // track the last run script.
       config_test::check_dir_permissions($messages, true);
       if (count($messages)>0) {
-        $message = array("You cannot upgrade at the moment until the directory permissions on the Warehouse are corrected. ");
-        foreach($messages as $m)
-          $message[] = $m['description'];
-        throw new Exception(implode("\n", $message));
+        throw new Exception ("You cannot upgrade at the moment until the directory permissions on the Warehouse are corrected.");
       }
       $system = new System_Model();
       // version in the file system

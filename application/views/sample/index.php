@@ -21,7 +21,9 @@
  * @link 	http://code.google.com/p/indicia/
  */
 
-echo $grid;
 ?>
+<div class="sample">
+<?php echo $table ?>
+<br/>
 <?php echo $upload_csv_form ?>
 </div>

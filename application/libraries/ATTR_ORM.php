@@ -23,7 +23,7 @@
 
 abstract class ATTR_ORM extends Valid_ORM {
 
-  public $search_field='caption';
+  protected $search_field='caption';
 
   public function validate(Validation $array, $save = FALSE) {
     // uses PHP trim() to remove whitespace from beginning and end of all fields before validation

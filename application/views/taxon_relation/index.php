@@ -21,9 +21,11 @@
  * @link 	http://code.google.com/p/indicia/
  */
 
-echo $grid;
 ?>
-<form action="<?php echo url::site().'taxon_relation/create/'.$taxa_taxon_list_id; ?>">
-<input type="submit" value="New taxon relation" class="ui-corner-all ui-state-default button" />
+<div class="termlist">
+<?php echo $table ?>
+<br/>
+<form action="<?php echo url::site().'taxon_relation/create/'.$this->uri->argument(1); ?>" method="post">
+<input type="submit" value="New Taxon Relation" />
 </form>
-<?php echo $upload_csv_form ?>
+</div>

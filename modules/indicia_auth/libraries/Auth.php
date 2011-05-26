@@ -316,22 +316,29 @@ class Auth_Core {
   }
 
   /**
-   * Test if the current logged in user is at least user, editor or admin of at least one website.
-   * @return boolean True if the user is has access to any website at this level.
+   * Test if the current logged in user is admin of at least one website.
+   * @return boolean True if the user is an admin of any website.
    */
-  public function has_any_website_access($level) {
-    switch ($level) {
-      case 'admin': $role=1; break;
-      case 'editor': $role=2; break;
-      case 'user': $role=3; break;
-    }
+  public function is_any_website_admin() {
     return ORM::factory('users_website')->where(
         array('user_id' => $_SESSION['auth_user']->id,
-        'site_role_id <=' => $role, 'site_role_id IS NOT' => NULL))->find()->loaded;
+        'site_role_id' => 1))->find()->loaded;
+  }
+
+  /**
+   * Returns the user's authorised list of ORM websites.
+   * @return Array of ORM website objects.
+   */
+  protected function get_allowed_website_list() {
+    $websites = ORM::factory('website');
+    if (!is_null($this->gen_auth_filter)) {
+      $websites = $websites->in('id', $this->gen_auth_filter['values']);
+    }
+    return $websites->find_all();
   }
       
   /**
-   * Returns true if the supplied user has a role on the supplied website.
+   * Returns true if the supplied user has a role on the supplied website..
    *
    * @param   integer    user id field
    * @param   integer    website id field

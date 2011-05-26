@@ -14,11 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Services
+ * @package	Services
  * @subpackage Data
- * @author  Indicia Team
- * @license http://www.gnu.org/licenses/gpl.html GPL
- * @link    http://code.google.com/p/indicia/
+ * @author	Indicia Team
+ * @license	http://www.gnu.org/licenses/gpl.html GPL
+ * @link 	http://code.google.com/p/indicia/
  */
 
 
@@ -116,7 +116,7 @@ class Data_Controller extends Data_Service_Base_Controller {
   */
   public function location_attribute_value()
   {
-    $this->handle_call('location_attribute_value');
+  $this->handle_call('location_attribute_value');
   }
 
   /**
@@ -125,18 +125,9 @@ class Data_Controller extends Data_Service_Base_Controller {
   */
   public function location_image()
   {
-    $this->handle_call('location_image');
+  $this->handle_call('location_image');
   }
-
- /**
-  * Provides the /service/data/sample_image service.
-  * Retrieves details of sample images.
-  */
-  public function sample_image()
-  {
-    $this->handle_call('sample_image');
-  }
-
+  
   /**
   * Provides the /services/data/occurrence service.
   * Retrieves details of occurrences.
@@ -163,7 +154,7 @@ class Data_Controller extends Data_Service_Base_Controller {
   {
   $this->handle_call('occurrence_attribute_value');
   }
-
+  
   /**
   * Provides the /service/data/occurrence_image service.
   * Retrieves details of occurrence images.
@@ -172,7 +163,7 @@ class Data_Controller extends Data_Service_Base_Controller {
   {
   $this->handle_call('occurrence_image');
   }
-
+  
   /**
   * Provides the /service/data/occurrence_attribute service.
   * Retrieves details of occurrence attributes.
@@ -181,7 +172,7 @@ class Data_Controller extends Data_Service_Base_Controller {
   {
   $this->handle_call('determination');
   }
-
+  
   /**
   * Provides the /services/data/person service.
   * Retrieves details of a single person.
@@ -237,32 +228,13 @@ class Data_Controller extends Data_Service_Base_Controller {
   $this->handle_call('taxon_group');
   }
 
- /**
-  * Provides the /service/data/taxon_image service.
-  * Retrieves details of location images.
-  */
-  public function taxon_image()
-  {
-    $this->handle_call('taxon_image');
-  }
-
-
   /**
   * Provides the /services/data/taxon_list service.
-  * Provides access to taxon_lists.
+  * Retrieves details of a single taxon_list.
   */
   public function taxon_list()
   {
-    $this->handle_call('taxon_list');
-  }
-
-  /**
-  * Provides the /services/data/taxon_relation_type service.
-  * Provides access to taxon_relation_types.
-  */
-  public function taxon_relation_type()
-  {
-    $this->handle_call('taxon_relation_type');
+  $this->handle_call('taxon_list');
   }
 
   /**
@@ -271,7 +243,7 @@ class Data_Controller extends Data_Service_Base_Controller {
   */
   public function taxa_taxon_list()
   {
-    $this->handle_call('taxa_taxon_list');
+  $this->handle_call('taxa_taxon_list');
   }
 
   /**
@@ -311,15 +283,6 @@ class Data_Controller extends Data_Service_Base_Controller {
   }
 
   /**
-  * Provides the /services/data/title service.
-  * Retrieves details of titles.
-  */
-  public function title()
-  {
-    $this->handle_call('title');
-  }
-
-  /**
   * Provides the /services/data/user service.
   * Retrieves details of a single user.
   */
@@ -335,15 +298,6 @@ class Data_Controller extends Data_Service_Base_Controller {
   public function website()
   {
     $this->handle_call('website');
-  }
-
-  /**
-  * Provides the /services/data/trigger service.
-  * Retrieves details of a single trigger.
-  */
-  public function trigger()
-  {
-    $this->handle_call('trigger');
   }
 
   /**
@@ -489,7 +443,7 @@ class Data_Controller extends Data_Service_Base_Controller {
    * should already be globally unique. Otherwise the current time is prefixed to the name to make it unique.
    */
   public function handle_media()
-  {
+  {    
     try
     {
       // Ensure we have write permissions.
@@ -504,7 +458,7 @@ class Data_Controller extends Data_Service_Base_Controller {
       );
       if ($_FILES->validate())
       {
-        if (array_key_exists('name_is_guid', $_POST) && $_POST['name_is_guid']=='true')
+        if (array_key_exists('name_is_guid', $_POST) && $_POST['name_is_guid']=='true') 
           $finalName = strtolower($_FILES['media_upload']['name']);
         else
           $finalName = time().strtolower($_FILES['media_upload']['name']);
@@ -539,15 +493,15 @@ class Data_Controller extends Data_Service_Base_Controller {
     $this->view_columns = $this->db->list_fields($this->viewname);
     $mode = $this->get_output_mode();
     if(!in_array ($this->entity, $this->allow_full_access)) {
-      if(array_key_exists ('website_id', $this->view_columns))
-      {
-        if ($this->website_id != 0) {
-          $this->db->in('website_id', array(null, $this->website_id));
+        if(array_key_exists ('website_id', $this->view_columns))
+        {
+          if ($this->website_id != 0) {
+            $this->db->in('website_id', array(null, $this->website_id));
+          }
+        } else {
+          Kohana::log('info', $this->viewname.' does not have a website_id - access denied');
+            throw new ServiceError('No access to '.$this->viewname.' allowed.');
         }
-      } else {
-        Kohana::log('info', $this->viewname.' does not have a website_id - access denied to table info');
-        throw new ServiceError('No access to '.$this->viewname.' allowed.');
-      }
     }
 
     $return = Array(
@@ -573,36 +527,37 @@ class Data_Controller extends Data_Service_Base_Controller {
   /**
   * Builds a query to extract data from the requested entity, and also
   * include relationships to foreign key tables and the caption fields from those tables.
-  * @param boolean $count if set to true then just returns a record count.
+  *
   * @todo Review this code for SQL Injection attack!
   * @todo Basic website filter done, but not clever enough.
   */
-  protected function build_query_results($count=false)
+  protected function build_query_results()
   {
     $this->foreign_keys = array();
     $this->db->from($this->viewname);
     // Select all the table columns from the view
-    if (!$count) {
-      $select = implode(', ', array_keys($this->db->list_fields($this->viewname)));
-      $this->db->select($select);
-    }
-    if (array_key_exists ('website_id', $this->view_columns)) {
-      if ($this->website_id) {
-        $this->db->in('website_id', array(null, $this->website_id));
-      } elseif ($this->in_warehouse && !$this->user_is_core_admin) {
-        // User is on Warehouse, but not core admin, so do a filter to all their websites.
-        $allowedWebsiteValues = array_merge($this->user_websites);
-        $allowedWebsiteValues[] = null;
-        $this->db->in('website_id', $allowedWebsiteValues);
+    $select = implode(', ', array_keys($this->db->list_fields($this->viewname)));
+    $this->db->select($select);
+    // Make sure that we're only showing items appropriate to the logged-in website
+    if(!$this->in_warehouse && !in_array ($this->entity, $this->allow_full_access)) {
+      if(array_key_exists ('website_id', $this->view_columns))
+      {
+        if ($this->website_id) {
+          $this->db->in('website_id', array(null, $this->website_id));
+        } elseif (!$this->user_is_core_admin) {
+          // User is on Warehouse, but not core admin, so do a filter to all their websites.
+          $allowedWebsiteValues = array_merge($this->user_websites);
+          $allowedWebsiteValues[] = null;
+          $this->db->in('website_id', $allowedWebsiteValues);
+        }
+      } else {
+        Kohana::log('info', $this->viewname.' does not have a website_id - access denied');
+        throw new ServiceError('No access to entity '.$this->entity.' allowed through view '.$this->viewname);
       }
-    } elseif (!$this->in_warehouse && !in_array($this->entity, $this->allow_full_access)) {
-      // If access is from remote website, then either table allows full access or exposes a website ID to filter on.
-      Kohana::log('info', $this->viewname.' does not have a website_id - access denied');
-      throw new ServiceError('No access to entity '.$this->entity.' allowed through view '.$this->viewname);
     }
-    // if requesting a single item in the segment, filter for it, otherwise use GET parameters to control the list returned
+     // if requesting a single item in the segment, filter for it, otherwise use GET parameters to control the list returned
     if ($this->uri->total_arguments()==0)
-      $this->apply_get_parameters_to_db($count);
+      $this->apply_get_parameters_to_db();
     else {
      if (!$this->check_record_access($this->entity, $this->uri->argument(1), $this->website_id))
       {
@@ -612,13 +567,10 @@ class Data_Controller extends Data_Service_Base_Controller {
       $this->db->where($this->viewname.'.id', $this->uri->argument(1));
     }
     try {
-      if ($count)
-        return $this->db->count_records();
-      else
-        return $this->db->get()->result_array(FALSE);
+      return $this->db->get()->result_array(FALSE);
     }
     catch (Exception $e) {
-      kohana::log('error', 'Error occurred running the following query from a service request:');
+      kohana::log('error', 'Error occurred running the following query from a service request:'); 
       kohana::log('error', $this->db->last_query());
       kohana::log('error', 'Request detail:');
       kohana::log('error', $this->uri->string());
@@ -650,21 +602,19 @@ class Data_Controller extends Data_Service_Base_Controller {
   /**
   * Works out what filter and other options to set on the db object according to the
   * $_GET parameters currently available, when retrieving a list of items.
-  * @param boolean $count set to true when doing a count query, so the limit and offset are skipped
   */
-  protected function apply_get_parameters_to_db($count=false)
+  protected function apply_get_parameters_to_db()
   {
     $sortdir='ASC';
     $orderby='';
     $like=array();
-    $where=array();
+    $where=array();    
     foreach ($_GET as $param => $value)
     {
       $value = urldecode($value);
       switch ($param)
       {
         case 'sortdir':
-          if ($count) break;
           $sortdir=strtoupper($value);
           if ($sortdir != 'ASC' && $sortdir != 'DESC')
           {
@@ -672,17 +622,14 @@ class Data_Controller extends Data_Service_Base_Controller {
           }
           break;
         case 'orderby':
-          if ($count) break;
           if (array_key_exists(strtolower($value), $this->view_columns))
             $orderby=strtolower($value);
           break;
         case 'limit':
-          if ($count) break;
           if (is_numeric($value))
           $this->db->limit($value);
           break;
         case 'offset':
-          if ($count) break;
           if (is_numeric($value))
           $this->db->offset($value);
           break;
@@ -750,7 +697,7 @@ class Data_Controller extends Data_Service_Base_Controller {
     }
     if ($orderby)
       $this->db->orderby($orderby, $sortdir);
-    if (count($like)) {
+    if (count($like)) {      
       foreach ($like as $field => $value) {
         $this->db->like($field, $value, false);
       }
@@ -758,9 +705,9 @@ class Data_Controller extends Data_Service_Base_Controller {
     if (count($where))
       $this->db->where($where);
   }
-
+  
   /**
-   * Takes the value of a query parameter passed to the data service, and processes it to apply the filter conditions
+   * Takes the value of a query parameter passed to the data service, and processes it to apply the filter conditions 
    * defined in the JSON to $this->db, ready for when the service query is run.
    * @param string $value The value of the parameter called query, which should contain a JSON object.
    * @link http://code.google.com/p/indicia/wiki/DataServices#Using_the_query_parameter
@@ -770,51 +717,34 @@ class Data_Controller extends Data_Service_Base_Controller {
     foreach ($query as $cmd=>$params) {
       switch(strtolower($cmd)) {
         case 'in':
+          if (count($params)<>2 || !is_array($params[1]))
+            kohana::log('error','Queries using IN must provide 2 parameters, the field name and an array of values');
+          else
+            $this->db->in($params[0],$params[1]);
+          break;
         case 'notin':
-          unset($foundfield);
-          unset($foundvalue);
-          foreach($params as $key=>$value) {
-            if (is_int($key)) {
-              if ($key===0) $foundfield = $value;
-              elseif ($key===1) $foundvalue = $value;
-              else throw new Exception("In clause statement for $key is not of the correct structure");
-            } elseif (is_array($value)) {
-              $this->db->$cmd($key,$value);
-            } else {
-              throw new Exception("In clause statement for $key is not of the correct structure");
-            }
-          }
-          // if param was supplied in form "cmd = array(field, values)" then foundfield and foundvalue would be set.
-          if (isset($foundfield) && isset($foundvalue))
-            $this->db->$cmd($foundfield,$foundvalue);
+          if (count($params)<>2 || !is_array($params[1]))
+            kohana::log('error','Queries using NOTIN must provide 2 parameters, the field name and an array of values');
+          else
+            $this->db->notin($params[0],$params[1]);
           break;
         case 'where':
+          if (count($params)==2 && !is_array($params[0] && !is_array($params[1])))
+            $this->db->where($params[0],$params[1]);
+          elseif (count($params)===1 && is_array($params[0]))
+            $this->db->where($params[0]);
+          else
+            kohana::log('error','Queries using WHERE must provide 2 parameters, the field name and value, or an '.
+                'associative array of WHERE conditions.');
+          break;
         case 'orwhere':
-        case 'like':
-        case 'orlike':
-          unset($foundfield);
-          unset($foundvalue);
-          foreach($params as $key=>$value) {
-            if (is_int($key)) {
-              if ($key===0) $foundfield = $value;
-              elseif ($key===1) $foundvalue = $value;
-              else throw new Exception("In clause statement for $key is not of the correct structure");
-            } elseif (!is_array($value)) {
-              // id fields must be queried by Where clause not Like.
-              $this_cmd = ($key=='id') ? str_replace('like', 'where', $cmd) : $cmd;
-              // Apply the filter command. if we are switching a like to a where clause, but no value is provided, then don't filter because
-              // like '%%' matches anything, but where x='' would break on an int field.
-              if ($this_cmd == $cmd || !empty($value)) $this->db->$this_cmd($key,$value);
-            } else {
-              throw new Exception("$cmd clause statement for $key is not of the correct structure. ".print_r($params, true));
-            }
-          }
-          // if param was supplied in form "cmd = array(field, value)" then foundfield and foundvalue would be set.
-          if (isset($foundfield) && isset($foundvalue)) {
-            // id fields must be queried by Where clause not Like.
-            if ($foundfield=='id') $this_cmd = str_replace('like', 'where', $cmd);
-            if ($this_cmd == $cmd || !empty($foundvalue)) $this->db->$this_cmd($infield,$foundvalue);
-          }
+          if (count($params)==2 && !is_array($params[0] && !is_array($params[1])))
+            $this->db->orwhere($params[0],$params[1]);
+          elseif (count($params)==1 && is_array($params[1]))
+            $this->db->orwhere($params[0]);
+          else
+            kohana::log('error','Queries using ORWHERE must provide 2 parameters, the field name and value, or an '.
+                'associative array of WHERE conditions.');
           break;
         default:
           kohana::log('error',"Unsupported query command $cmd");
@@ -868,11 +798,11 @@ class Data_Controller extends Data_Service_Base_Controller {
     }
     return $id;
   }
-
+  
   /**
   * Takes a single submission entry and attempts to save to the database.
   */
-  protected function submit_single($item) {
+  protected function submit_single($item) {        
     $model = ORM::factory($item['id']); // id is the entity.
     $this->check_update_access($item['id'], $item);
     $model->submission = $item;
@@ -929,7 +859,7 @@ class Data_Controller extends Data_Service_Base_Controller {
       $db->where(array('id' => $id));
 
       if(!in_array ($entity, $this->allow_full_access)) {
-          if(array_key_exists ('website_id', $fields))
+      		if(array_key_exists ('website_id', $fields))
             {
                 $db->in('website_id', array(null, $this->website_id));
             } else {
@@ -940,14 +870,6 @@ class Data_Controller extends Data_Service_Base_Controller {
     $number_rec = $db->count_records();
     return ($number_rec > 0 ? true : false);
   }
-  
-  /**
-   * Get the record count of the full grid result.
-   */
-  protected function record_count() {
-    return $this->build_query_results(true);
-  }
-  
 }
 
 ?>

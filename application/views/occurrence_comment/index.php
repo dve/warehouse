@@ -21,8 +21,11 @@
  * @link 	http://code.google.com/p/indicia/
  */
 
-echo $grid;
 ?>
-<form action="<?php echo url::site().'occurrence_comment/create/'.$occurrence_id; ?>">
+<div class="occurrence_comments">
+<?php echo $table ?>
+<br/>
+<form action="<?php echo url::site().'occurrence_comment/create/'.$occurrence_id; ?>" method="post">
 <input type="submit" value="New occurrence comment" class="ui-corner-all ui-state-default button" />
 </form>
+</div>

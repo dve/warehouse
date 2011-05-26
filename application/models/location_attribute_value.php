@@ -28,10 +28,11 @@
  * @subpackage Models
  * @link  http://code.google.com/p/indicia/wiki/DataModel
  */
-class Location_Attribute_Value_Model extends Attribute_Value_ORM {
-  public $search_field='text_value';
+class Location_Attribute_Value_Model extends ORM {
 
   protected $belongs_to = array('created_by'=>'user', 'updated_by'=>'user', 'location', 'location_attribute');
+
+  protected $search_field='text_value';
 
   public function validate(Validation $array, $save = FALSE) {
     self::attribute_validation($array, 'location');    

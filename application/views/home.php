@@ -78,7 +78,8 @@ if (count($notifications)!==0) : ?>
       echo "</tbody>\n";
     }
     echo "</tbody>\n</table>\n";
-  }?>
-</div>
-<?php endif; ?>
+  }
 
+endif;
+?>
+</div>

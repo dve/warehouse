@@ -61,9 +61,6 @@ echo data_entry_helper::textarea(array(
 ));
 echo $metadata;
 echo html::form_buttons(html::initial_value($values, 'taxa_taxon_designation:id')!=null, false, false);
-data_entry_helper::$dumped_resources[] = 'jquery';
-data_entry_helper::$dumped_resources[] = 'jquery_ui';
-data_entry_helper::$dumped_resources[] = 'json';
 echo data_entry_helper::dump_javascript();
 ?>
 </fieldset>

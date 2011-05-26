@@ -59,8 +59,7 @@ class Nbn_species_dict_sync_Controller extends Controller {
   public function taxon_groups_sync() {
     require DOCROOT.'modules/nbn_species_dict_sync/lib/nusoap.php';
     $client = new nusoap_client('http://www.nbnws.net/ws_3_5/GatewayWebService?wsdl', true);
-    $query1 = '<TaxonReportingCategoryListRequest xmlns="http://www.nbnws.net/TaxonReportingCategory" registrationKey="'.
-        kohana::config('nbn_species_dict_sync.registration_key').'">'.
+    $query1 = '<TaxonReportingCategoryListRequest xmlns="http://www.nbnws.net/TaxonReportingCategory" registrationKey="5c3c4776db01a696885c0721055f9bacd7f10ec9">'.
         '</TaxonReportingCategoryListRequest>';
     $response = $client->call('GetTaxonReportingCategoryList', $query1);
     $error = $client->getError();
@@ -142,8 +141,7 @@ class Nbn_species_dict_sync_Controller extends Controller {
     require DOCROOT.'modules/nbn_species_dict_sync/lib/nusoap.php';
     try {
       $client = new nusoap_client('http://www.nbnws.net/ws_3_5/GatewayWebService?wsdl', true);
-      $query1 = '<DesignationListRequest xmlns="http://www.nbnws.net/Designation" registrationKey="'.
-          kohana::config('nbn_species_dict_sync.registration_key').'">'.
+      $query1 = '<DesignationListRequest xmlns="http://www.nbnws.net/Designation" registrationKey="5c3c4776db01a696885c0721055f9bacd7f10ec9">'.
           '</DesignationListRequest>';
       
       $response = $client->call('GetDesignationList', $query1);
@@ -354,15 +352,9 @@ class Nbn_species_dict_sync_Controller extends Controller {
     if ($stateData['mode']=='existing' || $stateData['mode']=='designations')
       return;
     kohana::log('debug', 'loadTaxonGroups');
-    $this->db->select('taxon_groups.id, taxon_groups.external_key')
+    $stateData['groups'] = $this->db->select('id, external_key')
           ->from('taxon_groups')
-          ->where('external_key is not null');
-    // if taxon groups taxon lists module installed, then we only load the groups associated with the current list.
-    if (in_array(MODPATH.'taxon_groups_taxon_lists', kohana::config('config.modules')))
-      $this->db
-          ->join('taxon_groups_taxon_lists', 'taxon_groups_taxon_lists.taxon_group_id', 'taxon_groups.id')
-          ->where('taxon_groups_taxon_lists.taxon_list_id', $stateData['list_id']);
-    $stateData['groups'] = $this->db
+          ->where('external_key is not null')
           ->get()
           ->result_array(false);
     $stateData['groupIdx'] = 0;

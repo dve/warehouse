@@ -30,28 +30,33 @@
 class Taxon_list_Controller extends Gridview_Base_Controller {
   
   public function __construct() {
-    parent::__construct('taxon_list', 'taxon_list/index');
+    parent::__construct('taxon_list','taxon_list','taxon_list/index');
     $this->columns = array(
       'id'=>'',
       'title'=>'',
       'description'=>'');
     $this->pagetitle = "Species lists";
-    $this->set_website_access('editor');
+    $this->auth_filter = $this->gen_auth_filter;
   }
   
-  public function index() {
-    if ($this->uri->total_arguments()>0) {
-      $this->base_filter=array('parent_id' => $this->uri->argument(1));
+  /** 
+   * Override the index page controller action to add filters for the parent list if viewing the child lists.
+   */
+  public function page($page_no, $filter=null) {
+    // This constructor normally has 1 argument which is the grid page. If there is a second argument
+    // then it is the parent list ID. 
+    if ($this->uri->total_arguments()>1) {
+      $this->base_filter=array('parent_id' => $this->uri->argument(2));
     }
-    parent::index();
+    parent::page($page_no, $filter);
     // pass the parent id into the view, so the create list button can use it to autoset
     // the parent of the new list.
-    if ($this->uri->total_arguments()>0) {
-      $parent_id = $this->uri->argument(1);
+    if ($this->uri->total_arguments()>1) {
+      $parent_id = $this->uri->argument(2);
       $this->view->parent_id=$parent_id;
     }
   }
-
+  
   /**
    *  Setup the default values to use when loading this controller to edit a new page.
    *  In this case, the parent_id and website_id are passed as $_POST data if creating 
@@ -104,13 +109,6 @@ class Taxon_list_Controller extends Gridview_Base_Controller {
       return (in_array($taxon_list->website_id, $this->auth_filter['values']));
     }
     return true;
-  }
-  
-  /**
-   * Must be core admin or website editor/admin to use the taxon lists.
-   */
-  protected function page_authorised() {
-    return $this->auth->logged_in('CoreAdmin') || $this->auth->has_any_website_access('editor');
   }
 
   /**

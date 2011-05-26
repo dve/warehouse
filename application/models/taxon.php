@@ -29,7 +29,7 @@
  * @link	http://code.google.com/p/indicia/wiki/DataModel
  */
 class Taxon_Model extends ORM {
-  public $search_field='taxon';
+  protected $search_field='taxon';
   protected $belongs_to = array('meaning', 'language', 'created_by' => 'user', 'updated_by' => 'user');
   protected $has_many = array('taxa_taxon_lists');
   protected $has_and_belongs_to_many = array('taxon_lists');
@@ -38,6 +38,7 @@ class Taxon_Model extends ORM {
     $array->pre_filter('trim');
     $array->add_rules('taxon', 'required');
     $array->add_rules('language_id', 'required');
+    $array->add_rules('scientific', 'required');
     $array->add_rules('taxon_group_id', 'required');
 
     // Explicitly add those fields for which we don't do validation

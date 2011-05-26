@@ -29,18 +29,11 @@
  */
 class Taxon_Group_Controller extends Gridview_Base_Controller {
   public function __construct() {
-    parent::__construct('taxon_group', 'taxon_group/index');
+    parent::__construct('taxon_group', 'taxon_group', 'taxon_group/index');
     $this->columns = array(
       'title'=>'');
     $this->pagetitle = "Taxon Groups";
     $this->session = Session::instance();
-  }
-  
-  /**
-   * You can only access the list of groups if at least an editor of one website.
-   */
-  protected function page_authorised() {
-    return $this->auth->logged_in('CoreAdmin') || $this->auth->has_any_website_access('editor');
   }
 
 }

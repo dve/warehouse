@@ -32,49 +32,62 @@ defined('SYSPATH') or die('No direct script access.');
  */
 abstract class Gridview_Base_Controller extends Indicia_Controller {
 
-  private $gridId = null;
-
   /* Constructor. $modelname = name of the model for the grid.
    * $viewname = name of the view which contains the grid.
    * $controllerpath = path the controller from the controllers folder
    * $viewname and $controllerpath can be ommitted if the names are all the same.
    */
-  public function __construct($modelname, $viewname=NULL, $controllerpath=NULL, $gridId=NULL) {
+  public function __construct($modelname, $gridmodelname=NULL, $viewname=NULL, $controllerpath=NULL) {
     $this->model=ORM::factory($modelname);
-    $this->modelname = $modelname;
+    $this->gridmodelname=is_null($gridmodelname) ? $modelname : $gridmodelname;
     $this->viewname=is_null($viewname) ? $modelname : $viewname;
     $this->controllerpath=is_null($controllerpath) ? $modelname : $controllerpath;
-    $this->gridId = $gridId;
-    $this->base_filter = array();
+    $this->pageNoUriSegment = 3;
+    $this->base_filter = array('deleted' => 'f');
     $this->auth_filter = null;
     $this->pagetitle = "Abstract gridview class - override this title!";
 
     parent::__construct();
+    $this->get_auth();
   }
 
   /**
    * This is the main controller action method for the index page of the grid.
    */
-  public function index() {
-    $this->view = new View($this->viewname);
+  public function page($page_no, $filter=null) {
+    $this->prepare_grid_view();
     $this->add_upload_csv_form();
-    $grid = new View('gridview');
-    $grid->source = $this->modelname;
-    $grid->id = $this->modelname;
-    $grid->columns = $this->columns;
-    $filter = $this->base_filter;
-    if (isset($this->auth_filter['field']))
-      $filter[$this->auth_filter['field']] = $this->auth_filter['values'];
-    $grid->filter = $filter;
-    // Add grid to view
-    $this->view->grid = $grid->render();
+    
+    $grid =  Gridview_Controller::factory($this->gridmodel,
+        $page_no,
+        $this->pageNoUriSegment);
+    $grid->base_filter = $this->base_filter;
+    $grid->auth_filter = $this->auth_filter;
+    $grid->columns = array_intersect_key($this->columns, $grid->columns);
+    $grid->actionColumns = $this->get_action_columns();
+    if (isset($this->fixedSort)) {
+      $grid->fixedSort=$this->fixedSort;
+      $grid->fixedSortDir=$this->fixedSortDir;
+    }
+
+    // Add table to view
+    $this->view->table = $grid->display(true);
 
     // Templating
     $this->template->title = $this->pagetitle;
     $this->template->content = $this->view;
     
     // Setup breadcrumbs
-    $this->page_breadcrumbs[] = html::anchor($this->modelname, $this->pagetitle);    
+    $this->page_breadcrumbs[] = html::anchor($this->gridmodelname, $this->pagetitle);
+  }
+
+  protected function prepare_grid_view() {
+    $this->view = new View($this->viewname);
+    $this->gridmodel = ORM::factory($this->gridmodelname);
+    if (!$this->columns) {
+      // If the controller class has not defined the list of columns, use the entire list as a default
+      $this->columns = $this->gridmodel->table_columns;
+    }
   }
 
   /**
@@ -82,12 +95,52 @@ abstract class Gridview_Base_Controller extends Indicia_Controller {
    * override this in controllers to specify a different set of actions.
    */
   protected function get_action_columns() {
-    return array(
-      array(
-        'caption' => 'edit',
-        'url'=>$this->controllerpath."/edit/{id}"
-      )
-    );
+    return array('edit' => $this->controllerpath."/edit/£id£");
+  }
+  
+  /**
+   * Override to control the visibility of each action.
+   * @param Array $row Row data in an associative array.
+   * @param string $actionName Name of the action to check for visibility in this row.
+   */
+  protected function get_action_visibility($row, $actionName) {
+    return true;
+  }
+  
+
+  /**
+   * Method to retrieve pages for the index grid of taxa_taxon_list entries from an AJAX
+   * pagination call.
+   */
+  public function page_gv($page_no, $filter=null) {
+    $this->prepare_grid_view();
+    $this->auto_render = false;
+    $grid = Gridview_Controller::factory($this->gridmodel, $page_no, $this->pageNoUriSegment);
+    $grid->base_filter = $this->base_filter;
+    $grid->auth_filter = $this->auth_filter;
+    $grid->columns = array_intersect_key($this->columns, $grid->columns);
+    $grid->actionColumns = $this->get_action_columns();
+    return $grid->display();
+  }
+
+  /**
+   * Retrieve the list of websites the user has access to. The list is then stored in
+   * $this->gen_auth_filter. Also checks if the user is core admin.
+   */
+  protected function get_auth() {
+    // If not logged in as a Core admin, restrict access to available websites.
+    if(!$this->auth->logged_in('CoreAdmin')){
+      $site_role = (new Site_role_Model('Admin'));
+      $websites=ORM::factory('users_website')->where(
+      array('user_id' => $_SESSION['auth_user']->id,
+              'site_role_id' => $site_role->id))->find_all();
+      $website_id_values = array();
+      foreach($websites as $website)
+        $website_id_values[] = $website->website_id;
+      $website_id_values[] = null;
+      $this->gen_auth_filter = array('field' => 'website_id', 'values' => $website_id_values);
+    }
+    else $this->gen_auth_filter = null;    
   }
 
   /**

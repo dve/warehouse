@@ -1,29 +1,23 @@
 <?php
-/**
- * Indicia, the OPAL Online Recording Toolkit.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
- *
- * @package Indicia
- * @subpackage Libraries
- * @author  Indicia Team
- * @license http://www.gnu.org/licenses/gpl.html GPL
- * @link    http://code.google.com/p/indicia/
- */
 
 /**
-* The report reader encapsulates logic for reading reports from a number of sources, and opens up * report 
-* methods in a transparent way to the report controller.
+* INDICIA
+* @link http://code.google.com/p/indicia/
+* @package Indicia
 */
+
+/**
+* <h1>XML Report reader</h1>
+* <p>The report reader encapsulates logic for reading reports from a number of sources, and opens up * report methods in a transparent way to the report controller.</p>
+*
+* @package Indicia
+* @subpackage Controller
+* @license http://www.gnu.org/licenses/gpl.html GPL
+* @author Nicholas Clarke <xxx@xxx.net> / $Author$
+* @copyright xxxx
+* @version $Rev$ / $LastChangedDate$
+*/
+
 class XMLReportReader_Core implements ReportReader
 {
   private $name;
@@ -31,8 +25,6 @@ class XMLReportReader_Core implements ReportReader
   private $description;
   private $row_class;
   private $query;
-  private $countQuery=null;
-  private $field_sql;
   private $order_by;
   private $params = array();
   private $columns = array();
@@ -45,7 +37,7 @@ class XMLReportReader_Core implements ReportReader
   /**
   * <p> Constructs a reader for the specified report. </p>
   */
-  public function __construct($report, $websiteIds)
+  public function __construct($report)
   {
     Kohana::log('debug', "Constructing XMLReportReader for report $report.");
     try
@@ -56,10 +48,10 @@ class XMLReportReader_Core implements ReportReader
       $reader->open($report);
       while($reader->read())
       {
-        switch($reader->nodeType)
+      	switch($reader->nodeType)
         {
-          case (XMLREADER::ELEMENT):
-            switch ($reader->name)
+        	case (XMLREADER::ELEMENT):
+        	  switch ($reader->name)
               {
               case 'report':
                 $this->title = $reader->getAttribute('title');
@@ -67,40 +59,18 @@ class XMLReportReader_Core implements ReportReader
                 $this->row_class = $reader->getAttribute('row_class');
                 break;
               case 'query':
-                if (!$websiteFilterField = $reader->getAttribute('website_filter_field'))
-                  // default field name for filtering against websites
-                  $websiteFilterField = 'w.id';
                 $reader->read();
                 $this->query = $reader->value;
-                if ($websiteIds) {
-                  if (in_array('', $websiteIds)) {
-                    foreach($websiteIds as $key=>$value) {
-                      if (empty($value))
-                        unset($websiteIds[$key]);
-                    }  
-                  }
-                  $filter = $websiteFilterField.' in ('.implode($websiteIds, ',').')';
-                  $this->query = str_replace('#website_filter#', $filter, $this->query);
-                } else
-                  // use a dummy filter to return all websites if core admin
-                  $this->query = str_replace('#website_filter#', '1=1', $this->query);
-                break;
-              case 'field_sql':
-                $reader->read();
-                $this->field_sql = $reader->value;
-                $this->countQuery = str_replace('#field_sql#', ' count(*) ', $this->query);
-                $this->query = str_replace('#field_sql#', $this->field_sql, $this->query);
                 break;
               case 'order_by':
                 $reader->read();
                 $this->order_by[] = $reader->value;
                 break;
               case 'param':
-                $this->mergeParam(
+              	$this->mergeParam(
                     $reader->getAttribute('name'),
                     $reader->getAttribute('display'),
                     $reader->getAttribute('datatype'),
-                    $reader->getAttribute('allow_buffer'),
                     $reader->getAttribute('emptyvalue'),
                     $reader->getAttribute('description'),
                     $reader->getAttribute('query'),
@@ -135,47 +105,46 @@ class XMLReportReader_Core implements ReportReader
                     $reader->getAttribute('where'));
                 break;
               case 'tabColumn':
-                 $this->mergeTabColumn(
-                    $reader->getAttribute('name'),
-                    $reader->getAttribute('func'),
-                    $reader->getAttribute('display'),
+               	$this->mergeTabColumn(
+              	    $reader->getAttribute('name'),
+              	    $reader->getAttribute('func'),
+              	    $reader->getAttribute('display'),
                     $reader->getAttribute('style'),
                     $reader->getAttribute('class'),
                     $reader->getAttribute('visible'),
                     false
-                    );
-                break;
+              	    );
+              	break;
               case 'attributes':
-                $this->setAttributes(
+              	$this->setAttributes(
                     $reader->getAttribute('where'),
                     $reader->getAttribute('separator'),
                     $reader->getAttribute('hideVagueDateFields')); // determines whether to hide the main vague date fields for attributes.
                 break;
               case 'vagueDate': // This switches off vague date processing.
-                $this->vagueDateProcessing = $reader->getAttribute('enableProcessing');
-                break;
+              	$this->vagueDateProcessing = $reader->getAttribute('enableProcessing');
+              	break;
               case 'download': // This enables download processing.. potentially dangerous as updates DB.
-                $this->setDownload($reader->getAttribute('mode'));
-                break;
+              	$this->setDownload($reader->getAttribute('mode'));;
+              	break;
               case 'mergeTabColumn':
-                 $this->setMergeTabColumn(
-                    $reader->getAttribute('name'),
-                    $reader->getAttribute('tablename'),
-                    $reader->getAttribute('separator'),
+               	$this->setMergeTabColumn(
+              	    $reader->getAttribute('name'),
+              	    $reader->getAttribute('tablename'),
+              	    $reader->getAttribute('separator'),
                     $reader->getAttribute('where'),
-                    $reader->getAttribute('display'),
-                    $reader->getAttribute('visible'));
-                break;
+                    $reader->getAttribute('display'));
+              	break;
               }
               break;
-          case (XMLReader::END_ELEMENT):
-            switch ($reader->name)
+        	case (XMLReader::END_ELEMENT):
+        	  switch ($reader->name)
               {
                 case 'subTable':
-                  $this->tableIndex=$this->tables[$this->tableIndex]['parent'];
-                break;
+                	$this->tableIndex=$this->tables[$this->tableIndex]['parent'];
+        		    break;
               }
-             break;
+       		  break;
         }
       }
       $reader->close();
@@ -210,68 +179,63 @@ class XMLReportReader_Core implements ReportReader
   */
   public function getQuery()
   {
-    if ( $this->automagic == false) {
-      return $this->query;
-    }
+  	if ( $this->automagic == false) {
+	    return $this->query;
+  	}
     $query = "SELECT ";
     $j=0;
-  for($i = 0; $i < count($this->tables); $i++){
-    // In download mode make sure that the occurrences id is in the list
+	for($i = 0; $i < count($this->tables); $i++){
+	  // In download mode make sure that the occurrences id is in the list
 
       foreach($this->tables[$i]['columns'] as $column){
-    if ($j != 0) $query .= ",";
-    if ($column['func']=='') {
-        $query .= " lt".$i.".".$column['name']." AS lt".$i."_".$column['name'];
-    } else {
-          $query .= " ".preg_replace("/#parent#/", "lt".$this->tables[$i]['parent'], preg_replace("/#this#/", "lt".$i, $column['func']))." AS lt".$i."_".$column['name'];
-    }
-        $j++;
+		if ($j != 0) $query .= ",";
+		if ($column['func']=='') {
+		    $query .= " lt".$i.".".$column['name']." AS lt".$i."_".$column['name'];
+		} else {
+      		$query .= " ".preg_replace("/#parent#/", "lt".$this->tables[$i]['parent'], preg_replace("/#this#/", "lt".$i, $column['func']))." AS lt".$i."_".$column['name'];
+		}
+      	$j++;
       }
-  }
-  // table list
-  $query .= " FROM ";
-  for($i = 0; $i < count($this->tables); $i++){
-    if ($i == 0) {
-        $query .= $this->tables[$i]['tablename']." lt".$i;
-    } else {
-        if ($this->tables[$i]['join'] != null) {
-          $query .= " LEFT OUTER JOIN ";
-           } else {
-          $query .= " INNER JOIN ";
-        }
-        $query .= $this->tables[$i]['tablename']." lt".$i." ON (".$this->tables[$i]['tableKey']." = ".$this->tables[$i]['parentKey'];
-        if($this->tables[$i]['where'] != null) {
-          $query .= " AND ".preg_replace("/#this#/", "lt".$i, $this->tables[$i]['where']);
-       }
-        $query .= ") ";
-    }
-  }
-  // where list
-  $previous=false;
-  if($this->tables[0]['where'] != null) {
-    $query .= " WHERE ".preg_replace("/#this#/", "lt0", $this->tables[0]['where']);
-    $previous = true;
-  }
-  // when in download mode set a where clause
-  // only down load records which are complete or verified, and have not been downloaded before.
-  // for the final download, only download thhose records which have gone through an initial download, and hence assumed been error checked.
-  if($this->download != 'OFF'){
-    for($i = 0; $i < count($this->tables); $i++){
-      if ($this->tables[$i]['tablename'] == "occurrences") {
-        $query .= ($previous ? " AND " : " WHERE ").
-          " (lt".$i.".record_status in ('C'::bpchar, 'V'::bpchar) OR '".$this->download."'::text = 'OFF'::text) ".
-            " AND (lt".$i.".downloaded_flag in ('N'::bpchar, 'I'::bpchar) OR '".$this->download."'::text != 'INITIAL'::text) ".
-            " AND (lt".$i.".downloaded_flag = 'I'::bpchar OR ('".$this->download."'::text != 'CONFIRM'::text AND '".$this->download."'::text != 'FINAL'::text))";
-        break;
-      }
-    }
-  }
-  return $query;
-  }
-  
-  public function getCountQuery()
-  {
-    return $this->countQuery;
+	}
+	// table list
+	$query .= " FROM ";
+	for($i = 0; $i < count($this->tables); $i++){
+		if ($i == 0) {
+    		$query .= $this->tables[$i]['tablename']." lt".$i;
+		} else {
+    		if ($this->tables[$i]['join'] != null) {
+    			$query .= " LEFT OUTER JOIN ";
+       		} else {
+    			$query .= " INNER JOIN ";
+    		}
+    		$query .= $this->tables[$i]['tablename']." lt".$i." ON (".$this->tables[$i]['tableKey']." = ".$this->tables[$i]['parentKey'];
+    		if($this->tables[$i]['where'] != null) {
+    			$query .= " AND ".preg_replace("/#this#/", "lt".$i, $this->tables[$i]['where']);
+ 			}
+    		$query .= ") ";
+		}
+	}
+	// where list
+	$previous=false;
+	if($this->tables[0]['where'] != null) {
+		$query .= " WHERE ".preg_replace("/#this#/", "lt0", $this->tables[0]['where']);
+		$previous = true;
+	}
+	// when in download mode set a where clause
+	// only down load records which are complete or verified, and have not been downloaded before.
+	// for the final download, only download thhose records which have gone through an initial download, and hence assumed been error checked.
+	if($this->download != 'OFF'){
+		for($i = 0; $i < count($this->tables); $i++){
+			if ($this->tables[$i]['tablename'] == "occurrences") {
+				$query .= ($previous ? " AND " : " WHERE ").
+					" (lt".$i.".record_status in ('C'::bpchar, 'V'::bpchar) OR '".$this->download."'::text = 'OFF'::text) ".
+		    		" AND (lt".$i.".downloaded_flag in ('N'::bpchar, 'I'::bpchar) OR '".$this->download."'::text != 'INITIAL'::text) ".
+		    		" AND (lt".$i.".downloaded_flag = 'I'::bpchar OR ('".$this->download."'::text != 'CONFIRM'::text AND '".$this->download."'::text != 'FINAL'::text))";
+				break;
+			}
+		}
+	}
+	return $query;
   }
 
   /**
@@ -357,23 +321,23 @@ class XMLReportReader_Core implements ReportReader
 
   public function getVagueDateProcessing()
   {
-    return $this->vagueDateProcessing;
+  	return $this->vagueDateProcessing;
   }
 
   public function getDownloadDetails()
   {
-   $thisDefn = new stdClass;
-   $thisDefn->mode = $this->download;
-   $thisDefn->id = 'occurrences_id';
-   if($this->automagic) {
-     for($i = 0; $i < count($this->tables); $i++){
-      if($this->tables[$i]['tablename'] == 'occurrences'){ // Warning, will not work with multiple occurrence tables
-         $thisDefn->id = "lt".$i."_id";
-         break;
-      }
-     }
-   }
-   return $thisDefn;
+ 	$thisDefn = new stdClass;
+ 	$thisDefn->mode = $this->download;
+ 	$thisDefn->id = 'occurrences_id';
+ 	if($this->automagic) {
+ 		for($i = 0; $i < count($this->tables); $i++){
+			if($this->tables[$i]['tablename'] == 'occurrences'){ // Warning, will not work with multiple occurrence tables
+		 		$thisDefn->id = "lt".$i."_id";
+		 		break;
+			}
+ 		}
+ 	}
+ 	return $thisDefn;
   }
   //* PRIVATE FUNCTIONS *//
 
@@ -386,51 +350,50 @@ class XMLReportReader_Core implements ReportReader
   }
   private function buildAttributeQuery($attributes)
   {
-    $parentSingular = inflector::singular($this->tables[$attributes->parentTableIndex]['tablename']);
-    // This processing assumes some properties of the attribute tables - eg columns the data is stored in and deleted columns
-    $query = "SELECT vt.".$parentSingular."_id as main_id,
-      vt.text_value, vt.float_value, vt.int_value, vt.date_start_value, vt.date_end_value, vt.date_type_value,
-      at.id, at.caption, at.data_type, at.termlist_id, at.multi_value ";
+  	$parentSingular = inflector::singular($this->tables[$attributes->parentTableIndex]['tablename']);
+  	// This processing assumes some properties of the attribute tables - eg columns the data is stored in and deleted columns
+  	$query = "SELECT vt.".$parentSingular."_id as main_id,
+  		vt.text_value, vt.float_value, vt.int_value, vt.date_start_value, vt.date_end_value, vt.date_type_value,
+  		at.id, at.caption, at.data_type, at.termlist_id, at.multi_value ";
     $j=0;
-    // table list
-    $query .= " FROM ";
-    for($i = 0; $i <= $attributes->parentTableIndex; $i++){
-      if ($i == 0) {
-          $query .= $this->tables[$i]['tablename']." lt".$i;
-      } else { // making assumption to reduce the size of the query that all left outer join tables can be excluded
-          if ($this->tables[$i]['join'] == null) {
-            $query .= " INNER JOIN ".$this->tables[$i]['tablename']." lt".$i." ON (".$this->tables[$i]['tableKey']." = ".$this->tables[$i]['parentKey'];
-              if($this->tables[$i]['where'] != null) {
-                $query .= " AND ".preg_replace("/#this#/", "lt".$i, $this->tables[$i]['where']);
-             }
-              $query .= ") ";
-          }
-      }
-    }
+	// table list
+	$query .= " FROM ";
+	for($i = 0; $i <= $attributes->parentTableIndex; $i++){
+		if ($i == 0) {
+    		$query .= $this->tables[$i]['tablename']." lt".$i;
+		} else { // making assumption to reduce the size of the query that all left outer join tables can be excluded
+    		if ($this->tables[$i]['join'] == null) {
+    			$query .= " INNER JOIN ".$this->tables[$i]['tablename']." lt".$i." ON (".$this->tables[$i]['tableKey']." = ".$this->tables[$i]['parentKey'];
+    		    if($this->tables[$i]['where'] != null) {
+    			    $query .= " AND ".preg_replace("/#this#/", "lt".$i, $this->tables[$i]['where']);
+ 			    }
+    		    $query .= ") ";
+    		}
+		}
+	}
     $query .= " INNER JOIN ".$parentSingular."_attribute_values vt ON (vt.".$parentSingular."_id = "." lt".$attributes->parentTableIndex.".id and vt.deleted = FALSE) ";
     $query .= " INNER JOIN ".$parentSingular."_attributes at ON (vt.".$parentSingular."_attribute_id = at.id and at.deleted = FALSE) ";
     $query .= " INNER JOIN ".$parentSingular."_attributes_websites rt ON (rt.".$parentSingular."_attribute_id = at.id and rt.deleted = FALSE) ";
-    // where list
-  $previous=false;
-  if($this->tables[0]['where'] != null) {
-    $query .= " WHERE ".preg_replace("/#this#/", "lt0", $this->tables[0]['where']);
-    $previous = true;
-  }
-  if($attributes->where != null) {
-    $query .= ($previous ? " AND " : " WHERE ").$attributes->where;
-  }
+  	// where list
+	$previous=false;
+	if($this->tables[0]['where'] != null) {
+		$query .= " WHERE ".preg_replace("/#this#/", "lt0", $this->tables[0]['where']);
+		$previous = true;
+	}
+	if($attributes->where != null) {
+		$query .= ($previous ? " AND " : " WHERE ").$attributes->where;
+	}
     $query .= " ORDER BY lt".$attributes->parentTableIndex.".id";
     return $query;
   }
 
-  private function mergeParam($name, $display = '', $type = '', $allow_buffer='',$emptyvalue='', $description = '', $query='', $lookup_values='', $population_call='')
+  private function mergeParam($name, $display = '', $type = '', $emptyvalue='', $description = '', $query='', $lookup_values='', $population_call='')
   {
     if (array_key_exists($name, $this->params))
     {
       if ($display != '') $this->params[$name]['display'] = $display;
       if ($type != '') $this->params[$name]['datatype'] = $type;
-      if ($allow_buffer != '') $this->params[$name]['allow_buffer'] = $allow_buffer;
-      if ($emptyvalue != '') $this->params[$name]['emptyvalue'] = $emptyvalue;
+      if ($type != '') $this->params[$name]['emptyvalue'] = $emptyvalue;
       if ($description != '') $this->params[$name]['description'] = $description;
       if ($query != '') $this->params[$name]['query'] = $query;
       if ($lookup_values != '') $this->params[$name]['lookup_values'] = $lookup_values;
@@ -439,8 +402,7 @@ class XMLReportReader_Core implements ReportReader
     else
     {
       $this->params[$name] = array(
-        'datatype'=>$type,
-        'allow_buffer'=>$allow_buffer,
+        'datatype'=>$type, 
         'emptyvalue'=>$emptyvalue,
         'display'=>$display, 
         'description'=>$description, 
@@ -458,7 +420,7 @@ class XMLReportReader_Core implements ReportReader
       if ($display != '') $this->columns[$name]['display'] = $display;
       if ($style != '') $this->columns[$name]['style'] = $style;
       if ($class != '') $this->columns[$name]['class'] = $class;
-      if ($visible == 'false' || $this->columns[$name]['visible'] == 'false')
+      if ($visible == 'false' && $this->columns[$name]['visible'] == 'false')
         $this->columns[$name]['visible'] = 'false';
       else
         $this->columns[$name]['visible'] = 'true';
@@ -483,45 +445,45 @@ class XMLReportReader_Core implements ReportReader
 
   private function setTable($tablename, $where)
   {
-    $this->tables = array();
-    $this->tableIndex = 0;
-    $this->nextTableIndex = 1;
-    $this->tables[$this->tableIndex] = array(
+  	$this->tables = array();
+  	$this->tableIndex = 0;
+  	$this->nextTableIndex = 1;
+  	$this->tables[$this->tableIndex] = array(
           'tablename' => $tablename,
-          'parent' => -1,
+  	      'parent' => -1,
           'parentKey' => '',
           'tableKey' => '',
-          'join' => '',
-        'attributes' => '',
+  	      'join' => '',
+  		  'attributes' => '',
           'where' => $where,
           'columns' => array());
   }
 
   private function setSubTable($tablename, $parentKey, $tableKey, $join, $where)
   {
-    if($tableKey == ''){
-      if($parentKey == 'id'){
-        $tableKey = 'lt'.$this->nextTableIndex.".".(inflector::singular($this->tables[$this->tableIndex]['tablename'])).'_id';
-      } else {
-        $tableKey = 'lt'.$this->nextTableIndex.'.id';
-      }
-    } else {
-      $tableKey = 'lt'.$this->nextTableIndex.".".$tableKey;
-    }
+  	if($tableKey == ''){
+  		if($parentKey == 'id'){
+  			$tableKey = 'lt'.$this->nextTableIndex.".".(inflector::singular($this->tables[$this->tableIndex]['tablename'])).'_id';
+  		} else {
+  			$tableKey = 'lt'.$this->nextTableIndex.'.id';
+  		}
+  	} else {
+  		$tableKey = 'lt'.$this->nextTableIndex.".".$tableKey;
+  	}
     if($parentKey == ''){
       $parentKey = 'lt'.$this->tableIndex.".".(inflector::singular($tablename)).'_id';
-    } else { // force the link as this table has foreign key to parent table, standard naming convention.
+  	} else { // force the link as this table has foreign key to parent table, standard naming convention.
       $parentKey = 'lt'.$this->tableIndex.".".$parentKey;
-    }
+  	}
     $this->tables[$this->nextTableIndex] = array(
           'tablename' => $tablename,
-           'parent' => $this->tableIndex,
+  	   	  'parent' => $this->tableIndex,
           'parentKey' => $parentKey,
           'tableKey' => $tableKey,
-           'join' => $join,
+       	  'join' => $join,
           'attributes' => '',
           'where' => $where,
-           'columns' => array());
+       	  'columns' => array());
     $this->tableIndex=$this->nextTableIndex;
     $this->nextTableIndex++;
   }
@@ -553,18 +515,18 @@ class XMLReportReader_Core implements ReportReader
 
   private function setMergeTabColumn($name, $tablename, $separator, $where = '', $display = '')
   {
-    // in this case the data for the column in merged into one, if there are more than one records
-    // To do this we highjack the attribute handling functionality.
+  	// in this case the data for the column in merged into one, if there are more than one records
+  	// To do this we highjack the attribute handling functionality.
     $tableKey = (inflector::singular($this->tables[$this->tableIndex]['tablename'])).'_id';
 
     $thisDefn = new stdClass;
     $thisDefn->caption = 'caption';
     $thisDefn->main_id = $tableKey; // main_id is the name of the column in the subquery holding the PK value of the parent table.
-     $thisDefn->parentKey = "lt".$this->tableIndex."_id"; // parentKey holds the column in the main query to compare the main_id against.
+   	$thisDefn->parentKey = "lt".$this->tableIndex."_id"; // parentKey holds the column in the main query to compare the main_id against.
     $thisDefn->id = 'id'; // id is the name of the column in the subquery holding the attribute id.
-     $thisDefn->separator = $separator;
+   	$thisDefn->separator = $separator;
     $thisDefn->hideVagueDateFields = 'false';
-     $thisDefn->columnPrefix = 'merge_'.count($this->attributes);
+   	$thisDefn->columnPrefix = 'merge_'.count($this->attributes);
 
     if($display == ''){
       $display = $tablename.' '.$name;
@@ -578,19 +540,19 @@ class XMLReportReader_Core implements ReportReader
 
   private function setAttributes($where, $separator, $hideVagueDateFields)
   {
-    $thisDefn = new stdClass;
+  	$thisDefn = new stdClass;
     $thisDefn->caption = 'caption'; // caption is the name of the column in the subquery holding the attribute caption.
     $thisDefn->main_id = 'main_id'; // main_id is the name of the column in the subquery holding the PK value of the parent table.
-     $thisDefn->parentKey = "lt".$this->tableIndex."_id"; // parentKey holds the column in the main query to compare the main_id against.
+   	$thisDefn->parentKey = "lt".$this->tableIndex."_id"; // parentKey holds the column in the main query to compare the main_id against.
     $thisDefn->id = 'id'; // id is the name of the column in the subquery holding the attribute id.
-     $thisDefn->separator = $separator;
+   	$thisDefn->separator = $separator;
     $thisDefn->hideVagueDateFields = $hideVagueDateFields;
-     $thisDefn->columnPrefix = 'attr_'.$this->tableIndex.'_';
+   	$thisDefn->columnPrefix = 'attr_'.$this->tableIndex.'_';
     // folowing is used the query builder only
-     $thisDefn->parentTableIndex = $this->tableIndex;
+   	$thisDefn->parentTableIndex = $this->tableIndex;
     $thisDefn->where = $where;
 
-    $thisDefn->query = $this->buildAttributeQuery($thisDefn);
+  	$thisDefn->query = $this->buildAttributeQuery($thisDefn);
     $this->attributes[] = $thisDefn;
     // Make sure id column of parent table is in list of columns returned from query.
     $this->mergeTabColumn('id', '', '', '', '', 'false', true);
@@ -598,7 +560,7 @@ class XMLReportReader_Core implements ReportReader
 
   private function setDownload($mode)
   {
-    $this->download = $mode;
+  	$this->download = $mode;
   }
 
  /**
