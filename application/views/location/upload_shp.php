@@ -25,7 +25,6 @@
 <fieldset>
 <input type='checkbox' class="vnarrow" name="boundary"/>Select this checkbox if the data should be loaded into the boundary geometry in the location (as opposed to the centroid geometry).<br/>
 <input type='checkbox' class="vnarrow" name="use_parent"/>Select the checkbox if the locations are associated with a parent location.<br/>
-<input type='checkbox' class="vnarrow" name="use_parent_code"/>If so, use the code to join to the parent rather than the name?.<br/>
 <label for='SRID' class='wide' >SRID used in Shapefile</label>
 <select id='SRID' name='srid' >
   <option value="27700">EPSG:27700 British National Grid</option>
@@ -33,12 +32,11 @@
   <option value="900913">EPSG:900913: Google Projection</option>
   <option value="2169">EPSG:2169 Luxembourg 1930</option>
 </select><br/>
-<input type='checkbox' class="vnarrow" name="use_sref_system"/>Select this checkbox when using the boundary above and you wish the centroid to be generated using this sref. If not checked, the centroid will be generated in EPSG:4326 (Lat Long)<br/>
 <label for='type' class='wide' >Location type for all</label>
 <select id='type' name='type' >
 <?php 
-  $terms = $this->db->select('id, term')->from('list_termlists_terms')->where('termlist_external_key', 'indicia:location_types')->orderby('term', 'asc')->get()->result();
-  
+  $termlist = ORM::factory('termlist')->where('title', 'Location types')->find();
+  $terms = $termlist->orderby('term', 'asc')->terms;
   echo '<option value="" >&lt;Not applicable&gt;</option>';
   foreach ($terms as $term) {
     echo '<option value="'.$term->id.'" >'.$term->term.'</option>';
@@ -68,7 +66,7 @@
 You can also indicate a column to identify a parent location and a code field.</p>
 <table class="ui-widget ui-widget-content">
 <thead class="ui-widget-header">
-<tr><th>Column in DBF File</th><th>Name?</th><th>Parent Name/Code?</th><th>Code?</th></tr>
+<tr><th>Column in DBF File</th><th>Name?</th><th>Parent Name?</th><th>Code?</th></tr>
 </thead>
 <tbody>
 <?php $i=0;

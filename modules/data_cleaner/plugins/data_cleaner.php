@@ -49,13 +49,11 @@ function data_cleaner_get_occurrence_list($db) {
 from cache_occurrences co
 join occurrences o on o.id=co.id
 inner join samples s on s.id=o.sample_id and s.deleted=false
-left join samples sp on sp.id=s.parent_id and sp.deleted=false
 inner join websites w on w.id=o.website_id and w.deleted=false and w.verification_checks_enabled=true
 where o.deleted=false and o.record_status not in (\'I\',\'V\',\'R\',\'D\')
 and (o.last_verification_check_taxa_taxon_list_id<>o.taxa_taxon_list_id
 or o.updated_on>o.last_verification_check_date
 or s.updated_on>o.last_verification_check_date
-or sp.updated_on>o.last_verification_check_date
 or o.last_verification_check_date is null) limit 200';
   $db->query($query);
   $r = $db->query('select count(*) as count from occlist')->result_array(false);
@@ -109,7 +107,7 @@ function data_cleaner_run_rules($rules, $db) {
       // queries can override the error message field.
       $ruleErrorField = isset($query['errorMsgField']) ? $query['errorMsgField'] : $errorField;
       $implies_manual_check_required = isset($query['implies_manual_check_required']) && !$query['implies_manual_check_required'] ? 'false' : 'true';
-      $errorMsgSuffix = isset($query['errorMsgSuffix']) ? $query['errorMsgSuffix'] : (isset($rule['errorMsgSuffix']) ? $rule['errorMsgSuffix'] : '');
+      $errorMsgSuffix = isset($rule['errorMsgSuffix']) ? $rule['errorMsgSuffix'] : '';
       $sql = 'insert into occurrence_comments (comment, created_by_id, created_on,  
       updated_by_id, updated_on, occurrence_id, auto_generated, generated_by, implies_manual_check_required) 
   select distinct '.$ruleErrorField.$errorMsgSuffix.', 1, now(), 1, now(), co.id, true, \''.$rule['plugin'].'\', '.$implies_manual_check_required.'

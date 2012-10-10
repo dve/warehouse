@@ -475,7 +475,7 @@ class ORM extends ORM_Core {
     // them.
     foreach ($this->submission['fields'] as $field => $content) {
       if (isset($content['value']) && $content['value'] == '' && array_key_exists($field, $this->table_columns)) {
-        $type = $this->table_columns[$field]['type'];
+        $type = $this->table_columns[$field];
         switch ($type) {
           case 'int':
             $this->submission['fields'][$field]['value'] = null;
@@ -785,13 +785,7 @@ class ORM extends ORM_Core {
         // Set the correct parent key in the subModel
         $fkId = $a['fkId'];
         $a['model']['fields'][$fkId]['value'] = $this->id;
-        // copy any request fields
-        if(isset($a['copyFields'])){
-          foreach($a['copyFields'] as $from => $to){
-            Kohana::log("debug", "Setting ".$to." field (from parent record ".$from." field) to value ".$this->$from);
-            $a['model']['fields'][$to]['value'] = $this->$from;
-          }
-        }
+
         // Call the submit method for that model and
         // check whether it returns correctly
         $m->submission = $a['model'];
@@ -1196,7 +1190,7 @@ class ORM extends ORM_Core {
     }
     
     $attr = $this->db
-        ->select('caption','data_type','multi_value','termlist_id')
+        ->select('data_type','multi_value','termlist_id')
         ->from($this->object_name.'_attributes')
         ->where(array('id'=>$attrId))
         ->get()->result_array();
@@ -1240,7 +1234,7 @@ class ORM extends ORM_Core {
             kohana::log('debug', "  date_end_value=".$attrValueModel->date_end_value);
             kohana::log('debug', "  date_type_value=".$attrValueModel->date_type_value);
           } else {
-            $this->errors[$fieldId] = "Invalid value $value for attribute ".$attr->caption;
+            $this->errors[$fieldId] = "Invalid value $value for attribute";
             kohana::log('debug', "Could not accept value $value into date fields for attribute $fieldId.");
             return false;
           }
@@ -1276,11 +1270,10 @@ class ORM extends ORM_Core {
             'fkSearchFilterField' => 'termlist_id',
             'fkSearchFilterValue' => $attr->termlist_id,
           ));
-          kohana::log('debug', 'FK lookup query: '.$this->db->last_query());
           if ($r) {
             $value = $r;
           } else {
-            $this->errors[$fieldId] = "Invalid value $value for attribute ".$attr->caption;
+            $this->errors[$fieldId] = "Invalid value $value for attribute";
             kohana::log('debug', "Could not accept value $value into field $vf  for attribute $fieldId.");
             return false;
           }
@@ -1298,7 +1291,7 @@ class ORM extends ORM_Core {
       if (strcmp($attrValueModel->$vf,$value)===0 || ($dataType==='G' && !empty($attrValueModel->$vf))) {
         kohana::log('debug', "Accepted value $value into field $vf for attribute $fieldId. Value=".$attrValueModel->$vf);
       } else {
-        $this->errors[$fieldId] = "Invalid value $value for attribute ".$attr->caption;
+        $this->errors[$fieldId] = "Invalid value $value for attribute";
         kohana::log('debug', "Could not accept value $value into field $vf for attribute $fieldId.");
         return false;
       }

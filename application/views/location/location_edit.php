@@ -34,6 +34,7 @@ require_once(DOCROOT.'client_helpers/form_helper.php');
 if (isset($_POST))
   data_entry_helper::dump_errors(array('errors'=>$this->model->getAllErrors()));
 ?>
+<script type="text/javascript" src="http://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1"></script>
 <script type="text/javascript">
 
 function setAsBoundaryFeature(feature) {
@@ -64,7 +65,7 @@ jQuery(document).ready(function() {
     mapdiv.map.editLayer.redraw();
 <?php endif; ?>
     mapdiv.map.editLayer.events.on({'featureadded': function(evt) {
-      if (evt.feature.state===OpenLayers.State.INSERT) {
+      if (evt.feature.attributes.type!=='clickPoint') {
         var toRemove = [];
         $.each(mapdiv.map.editLayer.features, function(idx, feature) {
           if (feature.attributes.type=="boundary") {
@@ -135,24 +136,18 @@ This page allows you to specify the details of a location.
     'default' => html::initial_value($values, 'location:comment'),
     'disabled' => $disabled,
   ));
-  // sref_notations.sref_notations are not all the srefs we can handle: can handle other purely numeric ones. Add here as required.
-  // Don't like using the array add, but array merge renumbers the numeric keys.
-  $systems = kohana::config('sref_notations.sref_notations') +
-      array('2169' => 'EPSG:2169 Luxembourg 1930',
-            '27572' => 'EPSG:27572 NTF (Paris) / Lambert zone II');
   echo data_entry_helper::sref_and_system(array(
     'label' => 'Spatial Ref',
     'fieldname' => 'location:centroid_sref',
     'geomFieldname' => 'location:centroid_geom',
     'default' => html::initial_value($values, 'location:centroid_sref'),
     'defaultGeom' => html::initial_value($values, 'location:centroid_geom'),
-    'systems' => $systems,
+    'systems' => kohana::config('sref_notations.sref_notations'),
     'defaultSystem' => html::initial_value($values, 'location:centroid_sref_system'),
     'class' => 'control-width-3',
     'validation'=>'required',
     'disabled' => $disabled,
-  )); 
-  
+  ));
   ?>
   <input type="hidden" name="location:boundary_geom" id="boundary_geom" value="<?php echo $boundary_geom; ?>"/>
   <p class="instruct">Zoom the map in by double-clicking then single click on the location's centre to set the
@@ -161,7 +156,7 @@ This page allows you to specify the details of a location.
   $readAuth = data_entry_helper::get_read_auth(0-$_SESSION['auth_user']->id, kohana::config('indicia.private_key'));
   echo map_helper::map_panel(array(
     'readAuth' => $readAuth,
-    'presetLayers' => array('osm'),
+    'presetLayers' => array('virtual_earth'),
     'editLayer' => true,
     'layers' => array(),
     'initial_lat'=>52,
@@ -170,7 +165,7 @@ This page allows you to specify the details of a location.
     'width'=>870,
     'height'=>400,
     'initialFeatureWkt' => $centroid_geom,
-    'standardControls' => ($disabled_input==='YES') ? array('layerSwitcher','panZoomBar'): array('layerSwitcher','panZoomBar','drawPolygon','drawLine','modifyFeature'),
+    'standardControls' => ($disabled_input==='YES') ? array('layerSwitcher','panZoom'): array('layerSwitcher','panZoom','drawPolygon','drawLine','modifyFeature'),
   ));
   echo data_entry_helper::autocomplete(array(
     'label' => 'Parent location',

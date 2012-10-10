@@ -131,12 +131,9 @@ class Location_Model extends ORM_Tree {
         !empty($this->submission['fields']['boundary_geom']['value'])) {
       kohana::log('debug', 'working out centroid from boundary');
       // if the geom is supplied for the boundary, but not the centroid sref, then calculate it.
-      // First, convert the boundary geom to a centroid using any provided system, else use LatLong (EPSG:4326)
+      // First, convert the boundary geom to a centroid using LatLong (EPSG:4326)
       $boundary = $this->submission['fields']['boundary_geom']['value'];
-      if (!empty($this->submission['fields']['centroid_sref_system']['value']))
-        $centroid = $this->calcCentroid($boundary, $this->submission['fields']['centroid_sref_system']['value']);
-      else
-        $centroid = $this->calcCentroid($boundary);
+      $centroid = $this->calcCentroid($boundary);
       $this->submission['fields']['centroid_geom']['value'] = $centroid['wkt'];
       $this->submission['fields']['centroid_sref']['value'] = $centroid['sref'];
       $this->submission['fields']['centroid_sref_system']['value'] = $centroid['sref_system'];
@@ -150,20 +147,20 @@ class Location_Model extends ORM_Tree {
   /*
   * Calculates centroid of a location from a boundary wkt
   */
-  protected function calcCentroid($boundary, $system = '4326') {
+  protected function calcCentroid($boundary) {
     $row = $this->db->query("SELECT ST_AsText(ST_Centroid(ST_GeomFromText('$boundary', ".kohana::config('sref_notations.internal_srid')."))) AS wkt")->current();
     $result = array('wkt' => $row->wkt,
-      'sref' => spatial_ref::internal_wkt_to_sref($row->wkt, intval($system)),
-      'sref_system' => $system);
+      'sref' => spatial_ref::internal_wkt_to_sref($row->wkt, 4326),
+      'sref_system' => '4326');
     return $result;    
 }
   
   /*
   * Sets centroid from boundary_geom
   */
-  public function setCentroid($system = '4326') {
-    $boundary = $this->__get('boundary_geom', $system);
-    $centroid = $this->calcCentroid($boundary, $system);
+  public function setCentroid() {
+    $boundary = $this->__get('boundary_geom');
+    $centroid = $this->calcCentroid($boundary);
     $this->__set('centroid_geom', $centroid['wkt']);
     $this->__set('centroid_sref', $centroid['sref']);
     $this->__set('centroid_sref_system', $centroid['sref_system']);
