@@ -23,6 +23,10 @@ fieldset {
 legend {
   font-weight: bold;
 }
+textarea { 
+    width: 100%; 
+    min-height: 150px;
+}
 </style>
 </head>
 <body>
@@ -79,8 +83,8 @@ class record_details_and_comments {
     $auth=self::getAuth(0-$_GET['user_id'],$configuration['privateKey']);
     $occurrenceDetails = self::get_population_data(array(
       'table' => 'occurrence',
-      'extraParams' => $auth['read']+array('id'=>$_GET['occurrence_id']),
-    ));  
+      'extraParams' => $auth['read']+array('view' => 'cache','id'=>$_GET['occurrence_id']),
+    )); 
     echo "<p>Species: ".$occurrenceDetails[0]['taxon']."</p>";
     $vagueDate = self::vague_date_to_string(array(
       $occurrenceDetails[0]['date_start'],
@@ -88,7 +92,18 @@ class record_details_and_comments {
       $occurrenceDetails[0]['date_type']
     ));
     echo '<p>Date: '.$vagueDate."</p>";
-    echo "<p>Spatial reference: ".$occurrenceDetails[0]['entered_sref'].' ('.$occurrenceDetails[0]['entered_sref_system'].')'."</p>";         
+    //Needs blurred output as don't know user's rights
+    if (!empty($occurrenceDetails[0]['public_entered_sref'])) {
+      $srefData=$occurrenceDetails[0]['public_entered_sref'].' ('.$occurrenceDetails[0]['entered_sref_system'].')';
+    } else {
+      //Note: Get population data not returning output_sref_system at moment, hence added check for this in case this changes
+      if (!empty($occurrenceDetails[0]['output_sref_system'])) {  
+        $srefData=$occurrenceDetails[0]['output_sref'].' ('.$occurrenceDetails[0]['output_sref_system'].')';
+      } else {
+        $srefData=$occurrenceDetails[0]['output_sref'];
+      }
+    }
+    echo "<p>Spatial reference: ".$srefData."</p>";         
     echo "</fieldset>\n";
   }
   
