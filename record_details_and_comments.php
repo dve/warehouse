@@ -143,7 +143,7 @@ class record_details_and_comments {
         $r .= '</div>';
         $c = str_replace("\n", '<br/>', $comment['comment']);
         $r .= "<div>$c</div>";
-        $r .= '</div>';
+        $r .= '</div><br>';
       }
     }
     $r .= '</div>';
