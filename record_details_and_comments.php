@@ -32,7 +32,7 @@ textarea {
 <body>
 <form method="POST">
 <?php
-if (empty($_GET['user_id']) || empty($_GET['warehouse_url']) || empty($_GET['occurrence_id'])) {
+if ((empty($_GET['user_id'])&&empty($_GET['email_address'])) || empty($_GET['warehouse_url']) || empty($_GET['occurrence_id'])) {
   echo '<p>Invalid link</p>';
 } else {
   $configuration = record_details_and_comments::get_page_configuration();
@@ -58,15 +58,22 @@ if (empty($_GET['user_id']) || empty($_GET['warehouse_url']) || empty($_GET['occ
 
 class record_details_and_comments {
   public static function get_page_configuration() {
-    $auth=self::getAuth(0-$_GET['user_id'],'Indicia');
-    $userDetails = self::get_population_data(array(
-      'table' => 'user',
-      'extraParams' => $auth['read']+array('id'=>$_GET['user_id']),
-    )); 
-    $configuration['privateKey']='Indicia';
+    $privateKey='Indicia';
+    $auth=self::getAuth($privateKey);
+    if (!empty($_GET['user_id'])) {
+      $userDetails = self::get_population_data(array(
+        'table' => 'user',
+        'extraParams' => $auth['read']+array('id'=>$_GET['user_id']),
+      )); 
+      $configuration['username']=$userDetails[0]['username'];
+    }
+    $configuration['privateKey']=$privateKey;
     $configuration['cssPath']='media/css/default_site.css';
     $configuration['dataEntryHelperPath']='client_helpers/data_entry_helper.php';
-    $configuration['username']=$userDetails[0]['username'];
+    if (!empty($_GET['person_name']))
+      $configuration['person_name']=$_GET['person_name'];
+    if (!empty($_GET['email_address']))
+      $configuration['email_address']=$_GET['email_address'];
     return $configuration;
   }
 
@@ -80,7 +87,7 @@ class record_details_and_comments {
     <h1>Record details and comments</h1>
     <fieldset><legend>Details</legend>
     <?php
-    $auth=self::getAuth(0-$_GET['user_id'],$configuration['privateKey']);
+    $auth=self::getAuth($configuration['privateKey']);
     $occurrenceDetails = self::get_population_data(array(
       'table' => 'occurrence',
       'extraParams' => $auth['read']+array('view' => 'cache','id'=>$_GET['occurrence_id']),
@@ -109,7 +116,7 @@ class record_details_and_comments {
   
   public static function displayExistingOccurrenceComments($configuration) {
     $configuration = self::get_page_configuration();
-    $auth=self::getAuth(0-$_GET['user_id'],$configuration['privateKey']);
+    $auth=self::getAuth($configuration['privateKey']);
     $r = '<div>';
     $comments = self::get_population_data(array(
       'table' => 'occurrence_comment',
@@ -149,7 +156,13 @@ class record_details_and_comments {
   }
 
   //Get an authentication
-  private static function getAuth($website_id,$password) {
+  private static function getAuth($password) {
+    if (!empty($_GET['user_id'])) {
+      $userId=$_GET['user_id'];
+    } else {
+      $userId=1;    
+    }
+    $website_id=0-$userId;  
     $postargs = "website_id=$website_id";
     $response = self::http_post($_GET['warehouse_url'].'/index.php/services/security/get_read_write_nonces', $postargs);
     $nonces = json_decode($response, true);
@@ -300,11 +313,23 @@ class record_details_and_comments {
   public static function build_submission($configuration) {
     $submission = array();
     $submission['id']='occurrence_comment';
-    $submission['fields']['created_by_id']['value'] = $_GET['user_id'];
-    $submission['fields']['updated_by_id']['value'] = $_GET['user_id'];
+    if (!empty($_GET['user_id'])) {
+      $submission['fields']['created_by_id']['value'] = $_GET['user_id'];
+      $submission['fields']['updated_by_id']['value'] = $_GET['user_id'];
+    } else {
+      //If we don't know who the updater is, just use the admin account
+      $submission['fields']['created_by_id']['value'] = 1;
+      $submission['fields']['updated_by_id']['value'] = 1;
+    }
     $submission['fields']['occurrence_id']['value'] = $_GET['occurrence_id'];
     $submission['fields']['comment']['value'] = $_POST['comment-text'];
-    $submission['fields']['person_name']['value'] = $configuration['username'];
+    if (!empty($configuration['username']))
+      $submission['fields']['person_name']['value'] = $configuration['username'];
+    //If a specific person_name is supplied then always use this (e.g. for anonymous users)
+    if (!empty($configuration['person_name']))
+      $submission['fields']['person_name']['value'] = $configuration['person_name'];
+    if (!empty($configuration['email_address']))
+      $submission['fields']['email_address']['value'] = $configuration['email_address'];
     $response = self::do_submission('save', $submission);
     return $response;
   }
@@ -312,7 +337,7 @@ class record_details_and_comments {
   //Take the submission structure and give it to data services
   private static function do_submission($entity, $submission = null, $writeTokens = null) {
     $configuration = self::get_page_configuration();
-    $auth=self::getAuth(0-$_GET['user_id'],$configuration['privateKey']);
+    $auth=self::getAuth($configuration['privateKey']);
     $writeTokens=$auth['write'];
     $request = $_GET['warehouse_url']."/index.php/services/data/$entity";
     $postargs = 'submission='.urlencode(json_encode($submission));
