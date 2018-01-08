@@ -32,7 +32,7 @@ textarea {
 <body>
 <form method="POST">
 <?php
-if ((empty($_GET['user_id'])&&empty($_GET['email_address'])) || empty($_GET['warehouse_url']) || empty($_GET['occurrence_id'])) {
+if ((empty($_GET['user_id'])&&empty($_GET['email_address'])) || empty($_GET['occurrence_id'])) {
   echo '<p>Invalid link</p>';
 } else {
   $configuration = record_details_and_comments::get_page_configuration();
@@ -164,7 +164,7 @@ class record_details_and_comments {
     }
     $website_id=0-$userId;  
     $postargs = "website_id=$website_id";
-    $response = self::http_post($_GET['warehouse_url'].'/index.php/services/security/get_read_write_nonces', $postargs);
+    $response = self::http_post(self::get_warehouse_url().'/index.php/services/security/get_read_write_nonces', $postargs);
     $nonces = json_decode($response, true);
     return array(
       'read'=>array(
@@ -176,6 +176,10 @@ class record_details_and_comments {
           'nonce' => $nonces['write']
       )
     );
+  }
+  
+  private static function get_warehouse_url() {
+    return $_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']).'/';
   }
 
   //Allow us to POST a submission
@@ -230,7 +234,7 @@ class record_details_and_comments {
         $request .= '&'.self::array_to_query_string($options['extraParams'], true);
     }
     if (!isset($response) || $response===false) {
-      $response = self::http_post($_GET['warehouse_url'].'/'.$request, null);
+      $response = self::http_post(self::get_warehouse_url().'/'.$request, null);
     }
     $r = json_decode($response, true);
     if (!is_array($r)) {
@@ -339,7 +343,7 @@ class record_details_and_comments {
     $configuration = self::get_page_configuration();
     $auth=self::getAuth($configuration['privateKey']);
     $writeTokens=$auth['write'];
-    $request = $_GET['warehouse_url']."/index.php/services/data/$entity";
+    $request = self::get_warehouse_url()."/index.php/services/data/$entity";
     $postargs = 'submission='.urlencode(json_encode($submission));
     // passthrough the authentication tokens as POST data. Use parameter writeTokens
     foreach($writeTokens as $token => $value){
