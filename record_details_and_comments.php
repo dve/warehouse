@@ -50,8 +50,14 @@ if ((empty($_GET['user_id'])&&empty($_GET['email_address'])) || empty($_GET['occ
       ?><form><input type=button value="Return To Record Comments Screen" onClick="window.location = document.URL;"></form><?php
     }
   } else {
-    echo record_details_and_comments::displayOccurrenceDetails($configuration);
-    echo record_details_and_comments::displayExistingOccurrenceComments($configuration); ?>
+    //Get the record details if we are going to display the page and then pass this to the functions
+    $auth=record_details_and_comments::getAuth($configuration['privateKey']);
+    $occurrenceDetails = record_details_and_comments::get_population_data(array(
+      'table' => 'occurrence',
+      'extraParams' => $auth['read']+array('view' => 'cache','id'=>$_GET['occurrence_id']),
+    )); 
+    echo record_details_and_comments::displayOccurrenceDetails($configuration, $occurrenceDetails);
+    echo record_details_and_comments::displayExistingOccurrenceComments($configuration,$occurrenceDetails[0]['query']);?>
     </form><?php
   }
 }
@@ -78,7 +84,7 @@ class record_details_and_comments {
   }
 
   //Display the details of the occurrence
-  public static function displayOccurrenceDetails($configuration) {
+  public static function displayOccurrenceDetails($configuration, $occurrenceDetails) {
     echo "<style>\n";
     include $configuration['cssPath'];
     echo "</style>\n";
@@ -87,11 +93,6 @@ class record_details_and_comments {
     <h1>Record details and comments</h1>
     <fieldset><legend>Details</legend>
     <?php
-    $auth=self::getAuth($configuration['privateKey']);
-    $occurrenceDetails = self::get_population_data(array(
-      'table' => 'occurrence',
-      'extraParams' => $auth['read']+array('view' => 'cache','id'=>$_GET['occurrence_id']),
-    )); 
     echo "<p>Species: ".$occurrenceDetails[0]['taxon']."</p>";
     $vagueDate = self::vague_date_to_string(array(
       $occurrenceDetails[0]['date_start'],
@@ -114,7 +115,7 @@ class record_details_and_comments {
     echo "</fieldset>\n";
   }
   
-  public static function displayExistingOccurrenceComments($configuration) {
+  public static function displayExistingOccurrenceComments($configuration,$recordQueriedFlag) {
     $configuration = self::get_page_configuration();
     $auth=self::getAuth($configuration['privateKey']);
     $r = '<div>';
@@ -147,16 +148,21 @@ class record_details_and_comments {
       }
     }
     $r .= '</div>';
-    $r .= '<form><fieldset><legend>Add new comment</legend>';
-    $r .= '<textarea id="comment-text" name="comment-text"></textarea><br/>';
-    $r .= '<input type="submit" class="default-button" value="Save">';
-    $r .= '</fieldset></form>';
+    //Only allow commenting for queried records
+    if ($recordQueriedFlag==='Q') {
+      $r .= '<form><fieldset><legend>Add new comment</legend>';
+      $r .= '<textarea id="comment-text" name="comment-text"></textarea><br/>';
+      $r .= '<input type="submit" class="default-button" value="Save">';
+      $r .= '</fieldset></form>';
+    } else {
+      $r .= '<i>This record no longer has a queried status. It may be that someone else has already replied, so a reply is no longer required.</i>';
+    }
     $r .= '</div>';
     echo '<div class="detail-panel" id="detail-panel-comments"><h3>Comments</h3>' . $r . '</div>';
   }
 
   //Get an authentication
-  private static function getAuth($password) {
+  public static function getAuth($password) {
     if (!empty($_GET['user_id'])) {
       $userId=$_GET['user_id'];
     } else {
@@ -209,7 +215,7 @@ class record_details_and_comments {
   }
 
   //Get data from a database view. Simplified version of the standard indicia function with elements I don't need removed
-  private static function get_population_data($options) {
+  public static function get_population_data($options) {
     $serviceCall = 'data/'.$options['table'].'?mode=json';
     $request = "index.php/services/$serviceCall";
     if (array_key_exists('extraParams', $options)) {
