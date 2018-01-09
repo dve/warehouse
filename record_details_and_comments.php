@@ -20,6 +20,9 @@ form label {
 fieldset {
   margin: 1em 0;
 }
+.fieldset-auto-width {
+  display: inline-block;
+}
 legend {
   font-weight: bold;
 }
@@ -44,10 +47,15 @@ if ((empty($_GET['user_id'])&&empty($_GET['email_address'])) || empty($_GET['occ
       echo 'Error occurred';  
       ?><h2>A problem seems to have occurred, the response from the server is as follows:</h2><?php
       echo print_r($response,true);
-      ?><form><input type=button value="Return To Record Comments Screen" onClick="window.location = document.URL;"></form><?php
+      ?><br><form><input type=button value="Return To Record Comments Screen" onClick="window.location = document.URL;"></form><?php
     } else {
-      ?><h2>Your Comment Has Been Saved</h2><?php
-      ?><form><input type=button value="Return To Record Comments Screen" onClick="window.location = document.URL;"></form><?php
+      ?>
+      <fieldset class="fieldset-auto-width">
+      <h2>Thank You</h2>
+      <p>Your comment has been saved successfully</p>
+      </fieldset>
+      <br>
+      <form><input type=button value="Return To Record Comments Screen" onClick="window.location = document.URL;"></form><?php
     }
   } else {
     //Get the record details if we are going to display the page and then pass this to the functions
@@ -56,6 +64,10 @@ if ((empty($_GET['user_id'])&&empty($_GET['email_address'])) || empty($_GET['occ
       'table' => 'occurrence',
       'extraParams' => $auth['read']+array('view' => 'cache','id'=>$_GET['occurrence_id']),
     )); 
+    echo '<h1>Record details and comments</h1>';
+    if ($occurrenceDetails[0]['query']!=='Q') {
+      echo '<em style="color:red">This record no longer has a queried status and therefore doesn\'t require you to make a comment at this present time.</em><br>';
+    }
     echo record_details_and_comments::displayOccurrenceDetails($configuration, $occurrenceDetails);
     echo record_details_and_comments::displayExistingOccurrenceComments($configuration,$occurrenceDetails[0]['query']);?>
     </form><?php
@@ -90,8 +102,7 @@ class record_details_and_comments {
     echo "</style>\n";
     require_once $configuration['dataEntryHelperPath'];
     ?>  
-    <h1>Record details and comments</h1>
-    <fieldset><legend>Details</legend>
+    <fieldset class="fieldset-auto-width"><legend>Details</legend>
     <?php
     echo "<p>Species: ".$occurrenceDetails[0]['taxon']."</p>";
     $vagueDate = self::vague_date_to_string(array(
@@ -154,8 +165,6 @@ class record_details_and_comments {
       $r .= '<textarea id="comment-text" name="comment-text"></textarea><br/>';
       $r .= '<input type="submit" class="default-button" value="Save">';
       $r .= '</fieldset></form>';
-    } else {
-      $r .= '<i>This record no longer has a queried status. It may be that someone else has already replied, so a reply is no longer required.</i>';
     }
     $r .= '</div>';
     echo '<div class="detail-panel" id="detail-panel-comments"><h3>Comments</h3>' . $r . '</div>';
