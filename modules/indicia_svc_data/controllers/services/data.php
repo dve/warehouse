@@ -57,6 +57,7 @@ class Data_Controller extends Data_Service_Base_Controller {
   //
   // default to no updates allowed - must explicity allow updates.
   protected $allow_updates = array(
+    'comment_quick_reply_page_auth',
     'determination',
     'filter',
     'filters_user',
@@ -76,6 +77,7 @@ class Data_Controller extends Data_Service_Base_Controller {
     'occurrence_medium',
     'person_attribute_value',
     'person',
+    'comment_quick_reply_page_auth',
     'sample',
     'sample_attribute_value',
     'sample_comment',
@@ -102,6 +104,7 @@ class Data_Controller extends Data_Service_Base_Controller {
   protected $allow_full_access = array(
     'filter',
     'filters_user',
+    'comment_quick_reply_page_auth',
     'taxa_taxon_list',
     'taxa_taxon_list_attribute',
     'taxon_rank',
@@ -642,6 +645,11 @@ class Data_Controller extends Data_Service_Base_Controller {
   public function user_trust()
   {
     $this->handle_call('user_trust');
+  }
+
+  public function comment_quick_reply_page_auth()
+  {
+    $this->handle_call('comment_quick_reply_page_auth');
   }
 
   /**
