@@ -33,7 +33,7 @@ textarea {
 </style>
 </head>
 <body>
-<form method="POST">
+<form id="comment-form" method="POST" >
 <?php
 require_once 'client_helpers/data_entry_helper.php';
 // Request the saved authorisation number
@@ -70,10 +70,15 @@ else {
       ?>
       <fieldset class="fieldset-auto-width">
       <h2>Thank You</h2>
-      <p>Your comment has been saved successfully</p>
+      <p>Your comment has been saved successfully.</p>
+      <p>You posted the following comment:</p>
+      <p><?php
+      $commentText=$_POST['comment-text'];
+      echo $commentText;
+      ?><p>
       </fieldset>
       <br>
-      <form><input type=button value="Return To Record Comments Screen" onClick="window.location = document.URL;"></form><?php
+      <form><input type="button" value="Close" onclick="self.close();"></form><?php
     }
   }
   else {
@@ -208,10 +213,20 @@ class OcccurrenceCommentQuickReplyPage {
     $r .= '</div>';
     // Only allow commenting for queried records.
     if ($recordQueriedFlag === 'Q') {
-      $r .= '<form><fieldset><legend>Add new comment</legend>';
+      $r .= '<fieldset><legend>Add new comment</legend>';
       $r .= '<textarea id="comment-text" name="comment-text"></textarea><br/>';
-      $r .= '<input type="submit" class="default-button" value="Save">';
-      $r .= '</fieldset></form>';
+      $r .= "<input type='button' class='default-button' value='Save'
+      onclick='
+        if (document.getElementById(\"comment-text\").value) {
+          var r = confirm(\"Are you sure you want to save the comment?\");
+          if (r == true) {
+            document.getElementById(\"comment-form\").submit();
+          }
+        } else {
+          alert(\"Please enter a comment before saving\");
+        }
+      '>";
+      $r .= '</fieldset>';
     }
     $r .= '</div>';
     echo '<div class="detail-panel" id="detail-panel-comments"><h3>Comments</h3>' . $r . '</div>';
