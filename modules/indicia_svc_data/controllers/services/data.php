@@ -77,7 +77,6 @@ class Data_Controller extends Data_Service_Base_Controller {
     'occurrence_medium',
     'person_attribute_value',
     'person',
-    'comment_quick_reply_page_auth',
     'sample',
     'sample_attribute_value',
     'sample_comment',

@@ -183,6 +183,7 @@ class OcccurrenceCommentQuickReplyPage {
     $r = '<div>';
     $comments = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_comment',
+      'caching' => FALSE,
       'extraParams' => $auth['read'] + array(
         'occurrence_id' => $_GET['occurrence_id'],
         'sortdir' => 'DESC',
